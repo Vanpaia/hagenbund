@@ -1,0 +1,39 @@
+{# templates/_formhelpers.html #}
+{% macro render_field(field) %}
+  {% set is_textarea = field.type == 'TextAreaField' %}
+  {% set is_checkbox = field.type == 'BooleanField' %}
+  {% set is_select = field.type == 'SelectField' %}
+  {% set is_string = field.type == 'StringField' %}
+  {% set is_password = field.type == 'PasswordField' %}
+  
+  <div class="field">
+    {% if not is_checkbox %}
+      <label class="label" for="{{ field.id }}">{{ field.label.text }}</label>
+    {% endif %}
+
+    <div class="control {% if is_checkbox %}is-flex is-align-items-center gap-2{% endif %}">
+      {% if is_checkbox %}
+        {{ field(class="checkbox") }}
+        <label for="{{ field.id }}">{{ field.label.text }}</label>
+      {% elif is_textarea %}
+        {{ field(class="textarea" + (' is-danger' if field.errors else '')) }}
+      {% elif is_select %}
+        <div class="select is-fullwidth">
+          {{ field(class=('is-danger' if field.errors else '')) }}
+        </div>
+      {% elif is_password %}
+        {{ field(type="password", class="input is-5" + (' is-danger' if field.errors else '')) }}
+      {% elif is_string %}
+        {{ field(class="input is-5" + (' is-danger' if field.errors else '')) }}
+      {% else %}
+        {{ field(class="input is-" + (' is-danger' if field.errors else '')) }}
+      {% endif %}
+    </div>
+
+    {% if field.errors %}
+      {% for error in field.errors %}
+        <p class="help is-danger">{{ error }}</p>
+      {% endfor %}
+    {% endif %}
+  </div>
+{% endmacro %}

@@ -1,0 +1,113 @@
+<!-- templates/base.html -->
+<!DOCTYPE html>
+<html class="has-aside-left has-aside-mobile-transition has-navbar-fixed-top has-aside-expanded" lang="en">
+<head>
+  <meta charset="UTF-8">
+    <title>{{ title or "Flask + Bulma" }}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <link rel="stylesheet" href="https://cdn.materialdesignicons.com/4.9.95/css/materialdesignicons.min.css">
+  <script src = "https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+  <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
+</head>
+<body>
+   <div id="app">
+      <!-- Navbar -->
+      <nav class="navbar is-fixed-top" role="navigation" aria-label="main navigation">
+        <div class = "navbar-brand">
+          <a class = "navbar-item" href = "#">Empty Flask</a>
+          <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarApplication">
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+          </a>
+        </div>
+        <div id = "navbarApplication" class = "navbar-menu">
+          <div class = "navbar-start">
+             <a class = "navbar-item" href = "#">Home</a>
+             <a class = "navbar-item" href = "#">Next</a>
+             <div class = "navbar-item has-dropdown is-hoverable">
+                <a class = "navbar-link" href = "#">More</a>
+                <div class = "navbar-dropdown is-boxed">
+                   <a class = "navbar-item" href = "#">Option 1</a>                           
+                   <a class = "navbar-item" href = "#">Option 2</a>
+                   <a class = "navbar-item" href = "#">Option 3</a>
+                   <hr class = "navbar-divider">
+                   <a class = "navbar-item" href = "#">Separated link</a>
+                </div>
+             </div>
+           </div>
+            
+           <div class = "navbar-end">
+             <div class = "navbar-item">
+                <div class = "buttons">
+                   <a class="button is-primary">
+                     <strong>Sign up</strong>
+                   </a>
+                   <a class="button is-light">
+                     Log in
+                   </a>
+                </div>
+             </div>
+          </div>
+       </div>
+    </nav>
+   {% block content %}{% endblock %}
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="content px-6">
+        <div class="columns">
+          <div class="column"></div>
+          <div class="column is-one-third">
+            <p class="subtitle">
+              Company Bio
+            <p>
+            <p>
+              We are a team of college students working on this project like it's our full time job. Any amount would help support and continue development on this project and is greatly appreciated.
+            </p>
+          </div>
+          <div class="column">
+            <p class="subtitle">
+              Settings
+            <p>
+            <ul>
+              <li>
+                <a href="#!">Link 1</a>
+              </li>
+              <li>
+                <a href="#!">Link 2</a>
+              </li>
+              <li>
+                <a href="#!">Link 3</a>
+              </li>
+              <li>
+                <a href="#!">Link 4</a>
+              </li>
+            </ul>
+          </div>
+          <div class="column">
+            <p class="subtitle">
+              Connect
+            <p>
+            <ul>
+              <li>
+                <a href="#!">Link 1</a>
+              </li>
+              <li>
+                <a href="#!">Link 2</a>
+              </li>
+              <li>
+                <a href="#!">Link 3</a>
+              </li>
+              <li>
+                <a href="#!">Link 4</a>
+              </li>
+            </ul>
+          </div>
+          <div class="column"></div>
+        </div>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>

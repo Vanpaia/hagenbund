@@ -1,0 +1,113 @@
+2025-05-14 21:57:36,441 ERROR: Exception on /login [GET] [in /home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/flask/app.py:875]
+Traceback (most recent call last):
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/app/auth/routes.py", line 26, in login
+    return render_template('auth/login.html', title='Sign In', form=form)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/flask/templating.py", line 150, in render_template
+    return _render(app, template, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/flask/templating.py", line 131, in _render
+    rv = template.render(context)
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/hagen/Projects/empty_flask/app/templates/auth/login.html", line 2, in top-level template code
+    {% import "auth/_formhelpers.html" as forms %}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/hagen/Projects/empty_flask/app/templates/auth/_formhelpers.html", line 25, in template
+    {{ field(type="password", size="5" class="input is-5" + (' is-danger' if field.errors else '')) }}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+jinja2.exceptions.TemplateSyntaxError: expected token ',', got 'class'
+2025-05-14 21:57:59,717 INFO: app startup [in /home/hagen/Projects/empty_flask/app/__init__.py:42]
+2025-05-14 21:58:01,236 ERROR: Exception on /login [GET] [in /home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/flask/app.py:875]
+Traceback (most recent call last):
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/app/auth/routes.py", line 26, in login
+    return render_template('auth/login.html', title='Sign In', form=form)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/flask/templating.py", line 150, in render_template
+    return _render(app, template, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/flask/templating.py", line 131, in _render
+    rv = template.render(context)
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/hagen/Projects/empty_flask/app/templates/auth/login.html", line 2, in top-level template code
+    {% import "auth/_formhelpers.html" as forms %}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/hagen/Projects/empty_flask/app/templates/auth/_formhelpers.html", line 25, in template
+    {{ field(type="password" size="5" class="input is-5" + (' is-danger' if field.errors else '')) }}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+jinja2.exceptions.TemplateSyntaxError: expected token ',', got 'size'
+2025-05-14 21:59:13,740 INFO: app startup [in /home/hagen/Projects/empty_flask/app/__init__.py:42]
+2025-05-14 21:59:15,961 ERROR: Exception on /login [GET] [in /home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/flask/app.py:875]
+Traceback (most recent call last):
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/app/auth/routes.py", line 26, in login
+    return render_template('auth/login.html', title='Sign In', form=form)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/flask/templating.py", line 150, in render_template
+    return _render(app, template, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/flask/templating.py", line 131, in _render
+    rv = template.render(context)
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/hagen/Projects/empty_flask/app/templates/auth/login.html", line 2, in top-level template code
+    {% import "auth/_formhelpers.html" as forms %}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/hagen/Projects/empty_flask/app/templates/auth/_formhelpers.html", line 25, in template
+    {{ field(type="password" class="input is-5" + (' is-danger' if field.errors else '')) }}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+jinja2.exceptions.TemplateSyntaxError: expected token ',', got 'class'
+2025-05-14 21:59:49,137 INFO: app startup [in /home/hagen/Projects/empty_flask/app/__init__.py:42]
+2025-05-14 22:02:58,657 INFO: app startup [in /home/hagen/Projects/empty_flask/app/__init__.py:42]
+2025-07-21 08:48:20,337 INFO: app startup [in /home/hagen/Projects/empty_flask/app/__init__.py:42]

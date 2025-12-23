@@ -1,0 +1,103 @@
+<!-- templates/base.html -->
+<!DOCTYPE html>
+<html class="has-aside-left has-aside-mobile-transition has-navbar-fixed-top has-aside-expanded" lang="en">
+<head>
+  <meta charset="UTF-8">
+    <title>{{ title or "Flask + Bulma" }}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <link rel="stylesheet" href="https://cdn.materialdesignicons.com/4.9.95/css/materialdesignicons.min.css">
+  <script src = "https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+  <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
+  <style>
+    .sidebar {
+      position: fixed;
+      top: 3.25rem; /* height of navbar */
+      bottom: 0;
+      left: 0;
+      width: 220px;
+      padding: 1rem;
+      overflow-y: auto;
+    }
+
+    .main-content {
+      margin-left: 220px;
+      padding: 1rem;
+      margin-top: 3.25rem; /* height of navbar */
+    }
+  </style>
+</head>
+<body>
+   <div id="app">
+      <!-- Navbar -->
+      <nav class="navbar is-fixed-top" role="navigation" aria-label="main navigation">
+        <div class = "navbar-brand">
+          <a class = "navbar-item" href = "#">Empty Flask</a>
+          <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarApplication">
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+          </a>
+        </div>
+        <div id = "navbarApplication" class = "navbar-menu">
+          <div class = "navbar-start">
+             <a class = "navbar-item" href = "#">Home</a>
+             <a class = "navbar-item" href = "#">Next</a>
+             <div class = "navbar-item has-dropdown is-hoverable">
+                <a class = "navbar-link" href = "#">More</a>
+                <div class = "navbar-dropdown is-boxed">
+                   <a class = "navbar-item" href = "#">Option 1</a>                           
+                   <a class = "navbar-item" href = "#">Option 2</a>
+                   <a class = "navbar-item" href = "#">Option 3</a>
+                   <hr class = "navbar-divider">
+                   <a class = "navbar-item" href = "#">Separated link</a>
+                </div>
+             </div>
+           </div>
+            
+           <div class = "navbar-end">
+             <div class = "navbar-item">
+                <div class = "buttons">
+                   <a class="button is-primary">
+                     <strong>Sign up</strong>
+                   </a>
+                   <a class="button is-light">
+                     Log in
+                   </a>
+                </div>
+             </div>
+          </div>
+       </div>
+    </nav>
+    <aside class="menu sidebar">
+      <p class="menu-label">General</p>
+      <ul class="menu-list">
+        <li><a>Dashboard</a></li>
+        <li><a>Customers</a></li>
+      </ul>
+      <p class="menu-label">Administration</p>
+      <ul class="menu-list">
+        <li><a>Team Settings</a></li>
+        <li>
+          <a class="is-active">Manage Your Team</a>
+          <ul>
+            <li><a>Members</a></li>
+            <li><a>Plugins</a></li>
+            <li><a>Add a member</a></li>
+          </ul>
+       </li>
+       <li><a>Invitations</a></li>
+       <li><a>Cloud Storage Environment Settings</a></li>
+       <li><a>Authentication</a></li>
+     </ul>
+     <p class="menu-label">Transactions</p>
+     <ul class="menu-list">
+       <li><a>Payments</a></li>
+       <li><a>Transfers</a></li>
+       <li><a>Balance</a></li>
+     </ul>
+   </aside>
+   {% block content %}{% endblock %}
+  </div>
+</body>
+</html>

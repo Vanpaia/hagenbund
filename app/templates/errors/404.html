@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>404: This content doesn't exist!</h1>
+    <p>The content you requested doesn't exist. Please try to find the content in a different place.</p>
+    <br>
+    <p><a href="{{ url_for('main.index') }}">Back</a></p>
+{% endblock %}

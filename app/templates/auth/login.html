@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% import "auth/_formhelpers.html" as forms %}
+
+{% block content %}
+<section class="section">
+  <div class="container">
+    <h1 class="title">{{ title or "Form" }}</h1>
+    <div class="columns">
+      <div class="column"></div>
+      <div class="column">
+        <form method="POST">
+          {{ form.hidden_tag() }}
+
+          {% for field in form if field.type != 'CSRFTokenField' %}
+            {{ forms.render_field(field) }}
+          {% endfor %}
+
+          <div class="field mt-4">
+            <div class="control">
+              <button type="submit" class="button is-primary">
+                {{ submit_label or "Submit" }}
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="column"></div>
+    </div>
+  </div>
+</section>
+{% endblock %}

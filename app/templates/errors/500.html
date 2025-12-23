@@ -1,0 +1,9 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>500: Internal server error!</h1>
+    <p>Something has gone seriously wrong. The website administrator has been notified and any changes to the database have been rolled back.</p>
+    <br>
+    <p><a href="{{ url_for('main.index') }}">Back</a></p>
+{% endblock %}

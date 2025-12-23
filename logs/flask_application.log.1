@@ -1,0 +1,106 @@
+2025-05-14 20:46:55,472 ERROR: Exception on /login [POST] [in /home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/flask/app.py:875]
+Traceback (most recent call last):
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/sqlalchemy/sql/base.py", line 2181, in _entity_namespace_key
+    return getattr(ns, key)  # type: ignore
+           ^^^^^^^^^^^^^^^^
+AttributeError: type object 'User' has no attribute 'user'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/app/auth/routes.py", line 15, in login
+    user = User.query.filter_by(user=form.username.data).first()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/sqlalchemy/orm/query.py", line 1992, in filter_by
+    _entity_namespace_key(from_entity, key) == value
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/sqlalchemy/sql/base.py", line 2183, in _entity_namespace_key
+    raise exc.InvalidRequestError(
+sqlalchemy.exc.InvalidRequestError: Entity namespace for "user" has no property "user"
+2025-05-14 20:48:18,042 INFO: app startup [in /home/hagen/Projects/empty_flask/app/__init__.py:37]
+2025-05-14 20:53:04,297 INFO: app startup [in /home/hagen/Projects/empty_flask/app/__init__.py:37]
+2025-05-14 21:10:06,727 INFO: app startup [in /home/hagen/Projects/empty_flask/app/__init__.py:37]
+2025-05-14 21:11:26,680 INFO: app startup [in /home/hagen/Projects/empty_flask/app/__init__.py:37]
+2025-05-14 21:16:12,669 INFO: app startup [in /home/hagen/Projects/empty_flask/app/__init__.py:37]
+2025-05-14 21:17:26,350 INFO: app startup [in /home/hagen/Projects/empty_flask/app/__init__.py:37]
+2025-05-14 21:19:41,270 INFO: app startup [in /home/hagen/Projects/empty_flask/app/__init__.py:37]
+2025-05-14 21:19:48,677 INFO: app startup [in /home/hagen/Projects/empty_flask/app/__init__.py:37]
+2025-05-14 21:19:57,145 ERROR: Exception on /login [POST] [in /home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/flask/app.py:875]
+Traceback (most recent call last):
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/app/auth/routes.py", line 19, in login
+    login_user(user, remember=form.remember_me.data)
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/flask_login/utils.py", line 180, in login_user
+    if not force and not user.is_active:
+                         ^^^^^^^^^^^^^^
+AttributeError: 'User' object has no attribute 'is_active'
+2025-05-14 21:42:14,233 INFO: app startup [in /home/hagen/Projects/empty_flask/app/__init__.py:42]
+2025-05-14 21:42:21,380 ERROR: Exception on / [GET] [in /home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/flask/app.py:875]
+Traceback (most recent call last):
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/app/main/routes.py", line 8, in index
+    return render_template('index.html', title='Home')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/flask/templating.py", line 150, in render_template
+    return _render(app, template, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/flask/templating.py", line 131, in _render
+    rv = template.render(context)
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/hagen/Projects/empty_flask/app/templates/index.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "/home/hagen/Projects/empty_flask/app/templates/base.html", line 48, in top-level template code
+    <a class="button is-light" href="{{ url_for('login') }}">
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/flask/app.py", line 1121, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/flask/app.py", line 1110, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/empty_flask/venv/lib/python3.12/site-packages/werkzeug/routing/map.py", line 924, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'login'. Did you mean 'auth.login' instead?
+2025-05-14 21:42:54,668 INFO: app startup [in /home/hagen/Projects/empty_flask/app/__init__.py:42]
+2025-05-14 21:53:46,486 INFO: app startup [in /home/hagen/Projects/empty_flask/app/__init__.py:42]
+2025-05-14 21:55:03,947 INFO: app startup [in /home/hagen/Projects/empty_flask/app/__init__.py:42]
+2025-05-14 21:56:21,137 INFO: app startup [in /home/hagen/Projects/empty_flask/app/__init__.py:42]
+2025-05-14 21:57:31,689 INFO: app startup [in /home/hagen/Projects/empty_flask/app/__init__.py:42]
