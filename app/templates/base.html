@@ -3,71 +3,55 @@
 <html class="has-aside-left has-aside-mobile-transition has-navbar-fixed-top has-aside-expanded" lang="en">
 <head>
   <meta charset="UTF-8">
-    <title>{{ title or "Flask + Bulma" }}</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
-  <link rel="stylesheet" href="https://cdn.materialdesignicons.com/4.9.95/css/materialdesignicons.min.css">
-  <script src = "https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-  <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title or "Hagenbund" }}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
 </head>
 <body>
    <div id="app">
-      <!-- Navbar -->
-      <nav class="navbar is-fixed-top" role="navigation" aria-label="main navigation">
-        <div class = "navbar-brand">
-          <a class = "navbar-item" href = "#">Empty Flask</a>
-          <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarApplication">
-            <span aria-hidden="true"></span>
-            <span aria-hidden="true"></span>
-            <span aria-hidden="true"></span>
-            <span aria-hidden="true"></span>
-          </a>
-        </div>
-        <div id = "navbarApplication" class = "navbar-menu">
-          <div class = "navbar-start">
-             <a class = "navbar-item" href = "#">Home</a>
-             <a class = "navbar-item" href = "#">Next</a>
-             <div class = "navbar-item has-dropdown is-hoverable">
-                <a class = "navbar-link" href = "#">More</a>
-                <div class = "navbar-dropdown is-boxed">
-                   <a class = "navbar-item" href = "#">Option 1</a>                           
-                   <a class = "navbar-item" href = "#">Option 2</a>
-                   <a class = "navbar-item" href = "#">Option 3</a>
-                   <hr class = "navbar-divider">
-                   <a class = "navbar-item" href = "#">Separated link</a>
-                </div>
-             </div>
-           </div>
-            
-           <div class = "navbar-end">
-             <div class = "navbar-item">
-                <div class = "buttons">
-                   <a class="button is-primary">
-                     <strong>Sign up</strong>
-                   </a>
-                   {% if current_user.is_anonymous %}
-                   <a class="button is-light" href="{{ url_for('auth.login') }}">
-                     Log in
-                   </a>
-                   {% else %}
-                   <a class="button is-dark" href="{{ url_for('auth.logout') }}">
-                     Log out
-                   </a>
-                   {% endif %}
-                </div>
-             </div>
+    <!-- Navbar -->
+      {% if not hide_navbar %}
+        <nav class="navbar is-fixed-top" role="navigation" aria-label="main navigation">
+          <div class = "navbar-brand">
           </div>
-       </div>
-    </nav>
-    {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        {% for message in messages %}
-        <div class="notification">
-          <button class="delete"></button>
-          {{ message }}
-        </div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
+          <div id = "navbarApplication" class = "navbar-menu">
+            <div class = "navbar-start">
+             </div>
+              
+             <div class = "navbar-end">
+               <div class = "navbar-item">
+                  <div class = "buttons">
+                     {% if current_user.is_anonymous %}
+                     <a class="button is-light" href="{{ url_for('auth.login') }}">
+                       Log in
+                     </a>
+                     {% else %}
+                     <a class="button is-dark" href="{{ url_for('auth.logout') }}">
+                       Log out
+                     </a>
+                     {% endif %}
+                  </div>
+               </div>
+            </div>
+         </div>
+      </nav>
+    {% endif %}
+    <!-- Notification -->
+    <div id="notification-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999; width: 300px;">
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          {% for message in messages %}
+          <div class="notification">
+            <button class="delete"></button>
+            {{ message }}
+          </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+    </div>
+    <!-- Main Content -->
     {% block content %}{% endblock %}
     <!-- Footer -->
     <footer class="footer">
@@ -75,57 +59,47 @@
         <div class="columns">
           <div class="column"></div>
           <div class="column is-one-third">
-            <p class="subtitle">
-              Company Bio
-            <p>
-            <p>
-              We are a team of college students working on this project like it's our full time job. Any amount would help support and continue development on this project and is greatly appreciated.
-            </p>
-          </div>
           <div class="column">
-            <p class="subtitle">
-              Settings
-            <p>
-            <ul>
-              <li>
-                <a href="#!">Link 1</a>
-              </li>
-              <li>
-                <a href="#!">Link 2</a>
-              </li>
-              <li>
-                <a href="#!">Link 3</a>
-              </li>
-              <li>
-                <a href="#!">Link 4</a>
-              </li>
-            </ul>
-          </div>
-          <div class="column">
-            <p class="subtitle">
-              Connect
-            <p>
-            <ul>
-              <li>
-                <a href="#!">Link 1</a>
-              </li>
-              <li>
-                <a href="#!">Link 2</a>
-              </li>
-              <li>
-                <a href="#!">Link 3</a>
-              </li>
-              <li>
-                <a href="#!">Link 4</a>
-              </li>
-            </ul>
-          </div>
           <div class="column"></div>
         </div>
       </div>
     </footer>
   </div>
   <script>
+    function showNotification(message, type = 'is-info') {
+        const container = document.getElementById('notification-container');
+        
+        // Create notification element
+        const notification = document.createElement('div');
+        
+        // 'is-light' makes the background softer so text is easier to read
+        notification.className = `notification ${type} is-light shadow-sm`;
+        
+        // Add some styling for a nice entrance
+        notification.style.marginBottom = "10px";
+        notification.style.boxShadow = "0 4px 6px rgba(0,0,0,0.1)";
+        
+        notification.innerHTML = `
+            <button class="delete"></button>
+            ${message}
+        `;
+
+        // Add to the fixed container
+        container.appendChild(notification);
+
+        // Delete functionality
+        notification.querySelector('.delete').onclick = () => {
+            notification.remove();
+        };
+
+        // Auto-dismiss after 4 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 4000);
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
       const deleteButtons = document.querySelectorAll('.notification .delete');
       deleteButtons.forEach(button => {
@@ -136,5 +110,6 @@
       });
     });
   </script>
+  {% block scripts %}{% endblock %}
 </body>
 </html>

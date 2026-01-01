@@ -1,0 +1,432 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <!-- Main Content -->
+  <div class="main-content">
+    <section class="hero is-hero-bar">
+      <div class="hero-body">
+        <div class="container has-text-centered">
+          <div class="grid">
+            <div class="cell">
+            </div>
+            <div class="cell">
+              <div class="block">
+                <h1 class="title">
+                  Hey {{ name }}, give me your 2026 predictions!
+                </h1>
+              </div>
+              <div class="block">
+                <p class="subtitle">
+                  How confident are you going head-to-head with the other Brewery Gentleboys in 5 distinct categories? Fill in your predictions for 2026 and find out! Feeling lucky, punk?
+                </p>
+              </div>
+            </div>
+            <div class="cell">
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="section is-main-section">
+      <div class="fixed-grid has-1-cols">
+        <div class="grid">
+          <div class="cell" data-category="POL" data-count="{{ predictions.POL|length }}" style="--count: '{{ predictions.POL|length }}';"> 
+            <div class="card">
+              <div class="card-content has-text-centered">
+                <div class="is-widget-icon">
+                  <span class="icon has-text-primary is-large">
+                    <span class="material-symbols-outlined" style="font-size: 48px;">
+                      globe
+                    </span>
+                  </span>
+                </div>
+                <div class="is-widget-label">
+                  <h2 class="subtitle is-spaced">World Politics</h2>
+                  <div class="is-flex is-justify-content-center is-align-items-flex-start">
+                    <h2 class="title is-2 mb-0 count-display">
+                    </h2>
+                    
+                    <span class="is-size-5 has-text-weight-semibold" style="margin-top: 5px;">
+                      /5
+                    </span>
+                  </div>
+                  <p class="has-text-centered">
+                    Your predictions in the realm of national or international politics.
+                  </p>
+                  <div id="POL" class="columns">
+                    <div class="column is-two-fifths">
+                      <input class="input" id="new_title" type="text" placeholder="Enter a new prediction" />
+                    </div>
+                    <div class="column is-two-fifths">
+                      <input class="input" id="new_description" type="text" placeholder="(Optional) Qualification or description" />
+                    </div>
+                    <div class="column">
+                      <div class="control">
+                        <button class="button is-primary" onclick="addPrediction(event)">Add</button>
+                      </div>
+                    </div>
+                  </div>
+                  {% for prediction in predictions.POL %}
+                    <div id="{{ prediction.id }}" class="card">
+                      <div class="columns">
+                        <div class="column is-two-fifths">
+                          <p>{{ prediction.title }}</p>
+                        </div>
+                        <div class="column is-two-fifths">
+                          <p>{{ prediction.description }}</p>
+                        </div>
+                        <div class="column">
+                          <div class="control">
+                            <button class="button is-danger" onclick="removePrediction(event)">Remove</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="cell" data-category="EUR" data-count="{{ predictions.EUR|length }}" style="--count: '{{ predictions.EUR|length }}';"> 
+            <div class="card">
+              <div class="card-content has-text-centered">
+                <div class="is-widget-icon">
+                  <span class="icon has-text-primary is-large">
+                    <span class="material-symbols-outlined" style="font-size: 48px;">
+                      euro_symbol
+                    </span>
+                  </span>
+                </div>
+
+                <div class="is-widget-label">
+                  <h2 class="subtitle is-spaced">European Union</h2>
+                  <div class="is-flex is-justify-content-center is-align-items-flex-start">
+                    <h2 class="title is-2 mb-0 count-display">
+                    </h2>
+                    
+                    <span class="is-size-5 has-text-weight-semibold" style="margin-top: 5px;">
+                      /5
+                    </span>
+                  </div>
+                  <p>
+                    Your predictions in the realm of the European Union specifically.
+                  </p>
+                  <div id="EUR" class="columns">
+                    <div class="column is-two-fifths">
+                      <input class="input" id="new_title" type="text" placeholder="Enter a new prediction" />
+                    </div>
+                    <div class="column is-two-fifths">
+                      <input class="input" id="new_description" type="text" placeholder="(Optional) Qualification or description" />
+                    </div>
+                    <div class="column">
+                      <div class="control">
+                        <button class="button is-primary" onclick="addPrediction(event)">Add</button>
+                      </div>
+                    </div>
+                  </div>
+                  {% for prediction in predictions.EUR %}
+                    <div id="{{ prediction.id }}" class="card">
+                      <div class="columns">
+                        <div class="column is-two-fifths">
+                          <p>{{ prediction.title }}</p>
+                        </div>
+                        <div class="column is-two-fifths">
+                          <p>{{ prediction.description }}</p>
+                        </div>
+                        <div class="column">
+                          <div class="control">
+                            <button class="button is-danger" onclick="removePrediction(event)">Remove</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          </div>
+ 
+          <div class="cell" data-category="ENT" data-count="{{ predictions.ENT|length }}" style="--count: '{{ predictions.ENT|length }}';"> 
+            <div class="card">
+              <div class="card-content has-text-centered">
+                <div class="is-widget-icon">
+                  <span class="icon has-text-primary is-large">
+                    <span class="material-symbols-outlined" style="font-size: 48px;">
+                      sports_and_outdoors 
+                    </span>
+                  </span>
+                </div>
+                <div class="is-widget-label">
+                  <h2 class="subtitle is-spaced">Sport / Entertainment</h2>
+                  <div class="is-flex is-justify-content-center is-align-items-flex-start">
+                    <h2 class="title is-2 mb-0 count-display">
+                    </h2>
+                    
+                    <span class="is-size-5 has-text-weight-semibold" style="margin-top: 5px;">
+                      /5
+                    </span>
+                  </div>
+                  <p>
+                    Your predictions in anything sport or entertainment.
+                  </p>
+                  <div id="ENT" class="columns">
+                    <div class="column is-two-fifths">
+                      <input class="input" id="new_title" type="text" placeholder="Enter a new prediction" />
+                    </div>
+                    <div class="column is-two-fifths">
+                      <input class="input" id="new_description" type="text" placeholder="(Optional) Qualification or description" />
+                    </div>
+                    <div class="column">
+                      <div class="control">
+                        <button class="button is-primary" onclick="addPrediction(event)">Add</button>
+                      </div>
+                    </div>
+                  </div>
+                  {% for prediction in predictions.ENT %}
+                    <div id="{{ prediction.id }}" class="card">
+                      <div class="columns">
+                        <div class="column is-two-fifths">
+                          <p>{{ prediction.title }}</p>
+                        </div>
+                        <div class="column is-two-fifths">
+                          <p>{{ prediction.description }}</p>
+                        </div>
+                        <div class="column">
+                          <div class="control">
+                            <button class="button is-danger" onclick="removePrediction(event)">Remove</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          </div>
+              
+          <div class="cell" data-category="SCI" data-count="{{ predictions.SCI|length }}" style="--count: '{{ predictions.SCI|length }}';"> 
+            <div class="card">
+              <div class="card-content has-text-centered">
+                <div class="is-widget-icon">
+                  <span class="icon has-text-primary is-large">
+                    <span class="material-symbols-outlined" style="font-size: 48px;">
+                      experiment
+                    </span>
+                  </span>
+                </div>
+                <div class="is-widget-label">
+                  <h2 class="subtitle is-spaced">Science / Technology</h2>
+                  <div class="is-flex is-justify-content-center is-align-items-flex-start">
+                    <h2 class="title is-2 mb-0 count-display">
+                    </h2>
+                    
+                    <span class="is-size-5 has-text-weight-semibold" style="margin-top: 5px;">
+                      /5
+                    </span>
+                  </div>
+                  <p>
+                    Your predictions in anything science or technology.
+                  </p>
+                  <div id="SCI" class="columns">
+                    <div class="column is-two-fifths">
+                      <input class="input" id="new_title" type="text" placeholder="Enter a new prediction" />
+                    </div>
+                    <div class="column is-two-fifths">
+                      <input class="input" id="new_description" type="text" placeholder="(Optional) Qualification or description" />
+                    </div>
+                    <div class="column">
+                      <div class="control">
+                        <button class="button is-primary" onclick="addPrediction(event)">Add</button>
+                      </div>
+                    </div>
+                  </div>
+                  {% for prediction in predictions.SCI %}
+                    <div id="{{ prediction.id }}" class="card">
+                      <div class="columns">
+                        <div class="column is-two-fifths">
+                          <p>{{ prediction.title }}</p>
+                        </div>
+                        <div class="column is-two-fifths">
+                          <p>{{ prediction.description }}</p>
+                        </div>
+                        <div class="column">
+                          <div class="control">
+                            <button class="button is-danger" onclick="removePrediction(event)">Remove</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          </div>
+              
+          <div class="cell" data-category="ECO" data-count="{{ predictions.ECO|length }}" style="--count: '{{ predictions.ECO|length }}';"> 
+            <div class="card">
+              <div class="card-content has-text-centered">
+                <div class="is-widget-icon">
+                  <span class="icon has-text-primary is-large">
+                    <span class="material-symbols-outlined" style="font-size: 48px;">
+                      finance_mode
+                    </span>
+                  </span>
+                </div>
+                <div class="is-widget-label">
+                  <h2 class="subtitle is-spaced">Economy / Business</h2>
+                  <div class="is-flex is-justify-content-center is-align-items-flex-start">
+                    <h2 class="title is-2 mb-0 count-display">
+                    </h2>
+                    
+                    <span class="is-size-5 has-text-weight-semibold" style="margin-top: 5px;">
+                      /5
+                    </span>
+                  </div>
+                  <p>
+                    Your predictions in the business or economic sector.
+                  </p>
+                  <div id="ECO" class="columns">
+                    <div class="column is-two-fifths">
+                      <input class="input" id="new_title" type="text" placeholder="Enter a new prediction" />
+                    </div>
+                    <div class="column is-two-fifths">
+                      <input class="input" id="new_description" type="text" placeholder="(Optional) Qualification or description" />
+                    </div>
+                    <div class="column">
+                      <div class="control">
+                        <button class="button is-primary" onclick="addPrediction(event)">Add</button>
+                      </div>
+                    </div>
+                  </div>
+                  {% for prediction in predictions.ECO %}
+                    <div id="{{ prediction.id }}" class="card">
+                      <div class="columns">
+                        <div class="column is-two-fifths">
+                          <p>{{ prediction.title }}</p>
+                        </div>
+                        <div class="column is-two-fifths">
+                          <p>{{ prediction.description }}</p>
+                        </div>
+                        <div class="column">
+                          <div class="control">
+                            <button class="button is-danger" onclick="removePrediction(event)">Remove</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          </div>
+                           
+        </div>
+      </div>
+    </section>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    async function addPrediction(e) {
+      try {
+        // Get the data
+        const metadata = e.target.closest('.cell'); 
+
+        // Now that we have the specific row, we find the inputs inside ONLY that row
+        const category = metadata.dataset.category;
+        let count = parseInt(metadata.dataset.count, 10);
+        const title = metadata.querySelector('#new_title');
+        const description = metadata.querySelector('#new_description');
+
+        if (!title.value.trim()) {
+          showNotification('Title missing!', 'is-info');
+          return;
+        }
+
+        if ( count >= 5 ) {
+          showNotification('No more than 5 predictions per category!', 'is-info');
+          return;
+        }
+
+        const data = {"category": category, "title": title.value, "description":description.value};
+        // Submit the data
+        const response = await fetch('/api/predictions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        const result = await response.json();
+        // Process the data
+        if (response.ok) {
+          addPredictionCard(e, result.id, title.value, description.value);
+          title.value = "";
+          description.value = "";
+          metadata.dataset.count = count + 1;
+          metadata.style.setProperty('--count', `'${count + 1}'`);
+          showNotification('Prediction saved successfully!', 'is-success');
+            // Update your UI count here if needed
+        } else {
+            showNotification(result.error || 'Something went wrong', 'is-danger');
+        }
+      } catch (error) {
+        showNotification('Network error. Please try again.', 'is-danger');
+      }
+    }
+
+    async function removePrediction(e) {
+      try {
+        // Get the data
+        const metadata = e.target.closest('.cell'); 
+        let count = parseInt(metadata.dataset.count, 10);
+
+        const row = e.target.closest('.card'); 
+        const prediction_id = row.id;
+        // Submit the data
+        const response = await fetch(`/api/predictions/${prediction_id}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const result = await response.json();
+        // Process the data
+        if (response.ok) {
+            row.remove();
+            metadata.dataset.count = count - 1;
+            metadata.style.setProperty('--count', `'${count - 1}'`);
+            showNotification('Prediction removed!', 'is-success');
+            // Update your UI count here if needed
+        } else {
+            showNotification(result.error || 'Something went wrong', 'is-danger');
+        }
+      } catch (error) {
+        showNotification('Network error. Please try again.', 'is-danger');
+      }
+    }
+
+    function addPredictionCard(e, id, title, description) {
+      const container = e.target.closest('.is-widget-label'); 
+
+      const htmlString = `
+        <div id="${id}" class="card">
+          <div class="columns">
+            <div class="column is-two-fifths">
+              <p>${title}</p>
+            </div>
+            <div class="column is-two-fifths">
+              <p>${description}</p>
+            </div>
+            <div class="column">
+              <div class="control">
+                <button class="button is-danger" onclick="removePrediction(event)">Remove</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      container.insertAdjacentHTML('beforeend', htmlString);
+    }
+
+  </script>
+{% endblock %}

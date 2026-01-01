@@ -1,0 +1,14 @@
+<div class="card card-hover-effect mt-4">
+  <div class="card-content">
+    <div class="columns is-gapless"> 
+      <div class="column is-three-quarters-desktop is-two-thirds-tablet is-full-mobile pl-4">
+        <time datetime="{{ prediction.created_at.strftime('%Y-%m-%d') }}"><i>{{ prediction.created_at.strftime('%A, %d %B %Y') }}</i></time>
+        <p class="title is-4">{{ prediction.title }}</p>
+        <p class="subtitle is-6">{{ prediction.category.value }}</p>
+        <p>
+          {{ prediction.description}}
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

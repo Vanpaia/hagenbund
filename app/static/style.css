@@ -1,0 +1,4 @@
+.count-display::before {
+  /* This pulls the variable set on the .cell parent */
+  content: var(--count);
+}

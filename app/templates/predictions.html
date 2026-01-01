@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <!-- Main Content -->
+  <div class="main-content">
+    <section class="hero is-medium is-hero-bar">
+      <div class="hero-body">
+        <div class="container has-text-centered">
+          <h1 class="title">
+            Hey {{ name }}! Your 2026 Predictions 
+          </h1>
+          <p class="subtitle">
+            How confident are you going head-to-head with the other Brewery Gentleboys? Feeling lucky, punk?
+          </p>
+        </div>
+      </div>
+    </section>
+    <section class="section">
+      <div class="container">
+        {% for prediction in predictions %}
+          {% include '_predictions.html' %}
+        {% endfor %}
+      </div>
+    </section>
+  </div>
+{% endblock %}

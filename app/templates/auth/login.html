@@ -2,29 +2,32 @@
 {% import "auth/_formhelpers.html" as forms %}
 
 {% block content %}
-<section class="section">
-  <div class="container">
-    <h1 class="title">{{ title or "Form" }}</h1>
-    <div class="columns">
-      <div class="column"></div>
-      <div class="column">
-        <form method="POST">
-          {{ form.hidden_tag() }}
+<section class="hero is-fullheight" 
+         style="background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('{{ url_for('static', filename='hagenbund.png') }}') center / contain no-repeat;
+                height: 100vh;">
+  <div class="hero-body">
+    <div class="container">
+      <div class="columns is-centered">
+        <div class="column is-5-tablet is-4-desktop">
+          
+          <form class="box" method="POST">
+            {{ form.hidden_tag() }}
 
-          {% for field in form if field.type != 'CSRFTokenField' %}
-            {{ forms.render_field(field) }}
-          {% endfor %}
+            {% for field in form if field.type != 'CSRFTokenField' %}
+              {{ forms.render_field(field) }}
+            {% endfor %}
 
-          <div class="field mt-4">
-            <div class="control">
-              <button type="submit" class="button is-primary">
-                {{ submit_label or "Submit" }}
-              </button>
+            <div class="field mt-4">
+              <div class="control">
+                <button type="submit" class="button is-primary is-fullwidth">
+                  {{ submit_label or "Submit" }}
+                </button>
+              </div>
             </div>
-          </div>
-        </form>
+          </form>
+
+        </div>
       </div>
-      <div class="column"></div>
     </div>
   </div>
 </section>

@@ -23,10 +23,10 @@ def login():
         if not next_page or urllib.parse.urlsplit(next_page).netloc != '':
             next_page = url_for('main.index')
         return redirect(next_page)
-    return render_template('auth/login.html', title='Sign In', form=form)
+    return render_template('auth/login.html', title='Sign In', form=form, hide_navbar=True)
 
 
 @bp.route('/logout')
 def logout():
     logout_user()
-    return redirect(url_for('main.index'))
+    return redirect(url_for('auth.login'))
