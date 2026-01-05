@@ -1,4 +1,4 @@
-from flask import jsonify, render_template, request, redirect, url_for
+from flask import jsonify, render_template, request, redirect, url_for, current_app
 from flask_login import login_required, current_user
 from app import db
 from app.main import bp
@@ -17,13 +17,19 @@ def index():
 @login_required
 def prediction_overview():
     predictions = Prediction.query.filter_by(user_id=current_user.id).all()
+    all_predictions = Prediction.query.all()
+    all_sorted_preditions = defaultdict(list)
+    for p in all_predictions:
+        all_sorted_predictions[p.user_id].append(p)
+
+    current_app.logger.info(current_user.id)
 
     sorted_predictions = defaultdict(list)
     for p in predictions:
         sorted_predictions[p.category.name].append(p)
-    print(sorted_predictions)
+    current_app.logger.info(sorted_predictions)
 
-    return render_template('make_predictions.html', title='2026 Predictions', predictions=sorted_predictions, name=current_user.user_name)
+    return render_template('make_predictions.html', title='2026 Predictions', predictions=sorted_predictions, progress=all_sorted_predictions, name=current_user.user_name)
 
 
 @bp.route('/api/predictions', methods=['POST'])
@@ -36,10 +42,8 @@ def create_prediction():
     for field in required_fields:
         if field not in data:
             return jsonify({'error': f'Missing required field: {field}'}), 400
-    
-    user = User.query.filter_by(user_name="Test").first_or_404()
 
-    prediction = Prediction(user_id=user.id, title=data.get("title"), description=data.get("description"), category=Category[data.get("category")])
+    prediction = Prediction(user_id=current_user.id, title=data.get("title"), description=data.get("description"), category=Category[data.get("category")])
     db.session.add(prediction)
     db.session.commit()
 
@@ -57,13 +61,6 @@ def fetch_predictions():
     #Pulling the data from the URL for further use
     user = current_user
     category = request.args.get('category', None)
-
-    # Validate required fields
-    if not user:
-        return jsonify({'error': 'Missing required field: user'}), 400
-    print(user)
-    
-    user = User.query.filter_by(user_name="Test").first_or_404()
 
     predictions = Prediction.query.filter_by(user_id=user.id).all()
     data = []
