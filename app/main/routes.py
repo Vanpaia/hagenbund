@@ -4,6 +4,7 @@ from app import db
 from app.main import bp
 from app.models import Prediction, Category, User
 
+from sqlalchemy import func
 from collections import defaultdict
 
 
@@ -17,10 +18,15 @@ def index():
 @login_required
 def prediction_overview():
     predictions = Prediction.query.filter_by(user_id=current_user.id).all()
-    all_predictions = Prediction.query.all()
-    all_sorted_preditions = defaultdict(list)
-    for p in all_predictions:
-        all_sorted_predictions[p.user_id].append(p)
+    user_ids = [2, 3, 4, 5, 6, 7]
+
+    results = db.session.query(
+        Prediction.user_id, 
+        func.count(Prediction.id)
+    ).filter(Prediction.user_id.in_(user_ids))\
+     .group_by(Prediction.user_id)\
+     .all()
+    counts_dict = {str(user_id): str(count) for user_id, count in results}
 
     current_app.logger.info(current_user.id)
 
@@ -29,7 +35,7 @@ def prediction_overview():
         sorted_predictions[p.category.name].append(p)
     current_app.logger.info(sorted_predictions)
 
-    return render_template('make_predictions.html', title='2026 Predictions', predictions=sorted_predictions, progress=all_sorted_predictions, name=current_user.user_name)
+    return render_template('make_predictions.html', title='2026 Predictions', predictions=sorted_predictions, progress=counts_dict, name=current_user.user_name)
 
 
 @bp.route('/api/predictions', methods=['POST'])
