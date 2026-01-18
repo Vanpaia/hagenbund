@@ -21,13 +21,45 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(64))
     is_admin = db.Column(db.Boolean, default=False)
 
+    achievements = db.relationship("UserAchievement", back_populates="user")
+
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
-class Prediction(UserMixin, db.Model):
+class Achievement(db.Model):
+    __tablename__ = "achievement"
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(64), nullable=False)
+    description = db.Column(db.String(256), nullable=False)
+    logo = db.Column(db.String(64), nullable=True)
+
+    users = db.relationship("UserAchievement", back_populates="achievement")
+
+class UserAchievement(db.Model):
+    __tablename__ = 'user_achievement'
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'achievement_id', name='_user_achievement_uc'),
+    )
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    achievement_id = db.Column(db.Integer, db.ForeignKey('achievement.id'), nullable=False)
+    earned_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    is_notified = db.Column(db.Boolean, default=False)
+
+    # Relationships to make querying easier
+    user = db.relationship("User", back_populates="achievements")
+    achievement = db.relationship("Achievement", back_populates="users")
+
+user_achievements = db.Table('user_achievements', db.Model.metadata,
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),  
+    db.Column('achievement_id', db.Integer, db.ForeignKey('achievement.id'), primary_key=True),
+    db.Column('created_at', db.Date, default= lambda: datetime.now(timezone.utc))
+)
+
+class Prediction(db.Model):
     __tablename__ = "prediction"
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)

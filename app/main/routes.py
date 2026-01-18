@@ -67,7 +67,6 @@ def search_stocks():
         'data': result
     }), 200
 
-
 @bp.route('/api/predictions', methods=['POST'])
 def create_prediction():
     """Create a new prediction"""
