@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from app import db
 from app.main import bp
 from app.models import Prediction, Category, User
+from app.utils.stocks import search_stock_ticker
 
 from sqlalchemy import func
 from collections import defaultdict
@@ -46,6 +47,24 @@ def prediction_overview():
     current_app.logger.info(sorted_predictions)
 
     return render_template('make_predictions.html', title='2026 Predictions', predictions=sorted_predictions, progress=counts_dict, name=current_user.user_name)
+
+
+@bp.route('/api/stocks/search', methods=['POST'])
+def search_stocks():
+    """Search for a specific stock ticker using an external API"""
+    data = request.get_json()
+
+    # Validate required fields
+    required_fields = ['keywords']
+    for field in required_fields:
+        if field not in data:
+            return jsonify({'error': f'Missing required field: {field}'}), 400
+    result = search_stock_ticker(data.get("keywords"))
+
+    return jsonify({
+        'message': 'Stock search sucessful',
+        'data': result
+    }), 200
 
 
 @bp.route('/api/predictions', methods=['POST'])

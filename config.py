@@ -19,6 +19,7 @@ password = os.getenv("DB_PASSWORD")
 
 class Config(object):
     SECRET_KEY = os.environ.get('SECRET_KEY')
+    FMP_API = os.environ.get('FMP_API')
 #    SQLALCHEMY_DATABASE_URI = f'mysql+pymysql://{user}:{password}@{host}:{port}/{dbname}' or 'sqlite:///' + os.path.join(basedir, 'devdatabase.db')
     SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'devdatabase.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False

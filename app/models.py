@@ -43,6 +43,30 @@ class Prediction(UserMixin, db.Model):
          "created_at": self.created_at}
         return content
 
+class StockPick(UserMixin, db.Model):
+    __tablename__ = "stockpick"
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    symbol = db.Column(db.String(12), nullable=False)
+    name = db.Column(db.String(128), nullable=False)
+    currency = db.Column(db.String(12), nullable=False)
+    exchange_full_name = db.Column(db.String(128), nullable=False)
+    exchange = db.Column(db.String(12), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    category = db.Column(db.Enum(Category), nullable=False)
+    created_at = db.Column(db.Date, default= lambda: datetime.now(timezone.utc))
+
+    __table_args__ = (
+            db.UniqueConstraint('user_id', 'symbol', name='_user_symbol_uc'),
+        )
+
+    def to_dict(self):
+        content = {"title": self.title,
+         "description": self.description,
+         "category": self.category.value,
+         "created_at": self.created_at}
+        return content
+
 
 @login.user_loader
 def load_user(id):
