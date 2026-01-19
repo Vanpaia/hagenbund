@@ -325,7 +325,7 @@
       </div>
       <div class="fixed-grid has-1-cols">
         <div class="grid">
-          <div class="cell" data-category="INV" data-count="{{ predictions.INV|length }}" style="--count: '{{ predictions.INV|length }}';"> 
+          <div class="cell" data-category="INV" data-count="{{ stockpicks|length }}" style="--count: '{{ stockpicks|length }}';"> 
             <div class="card">
               <div class="card-content has-text-centered">
                 <div class="is-widget-icon">
@@ -348,6 +348,33 @@
                   <p class="has-text-centered">
                     Your $10,000 investment bet for 2026
                   </p>
+                  <nav id="current_stocks" class="panel is-primary">
+                    <p class="panel-heading">Your Portfolio</p>
+                    {% for stock in stockpicks %}
+                      <div id="{{ stock.id }}"class="panel-block is-block">
+                        <div class="columns">
+                          <div class="column">
+                            <div class="control">
+                              <button class="button is-danger" onclick="removeStock(event)">Remove</button>
+                            </div>
+                          </div>
+                          <div class="column">
+                            <p>{{ stock.symbol }}</p>
+                          </div>
+                          <div class="column">
+                            <p>{{ stock.name }}</p>
+                          </div>
+                          <div class="column">
+                            <p>{{ stock.industry }}</p>
+                          </div>
+                          <div class="column">
+                            <p>$ {{ stock.current_price }}</p>
+                          </div>
+                        </div>
+                      </div>
+                    {% endfor %}
+                  </nav>
+
                   <div id="INV" class="columns">
                     <div class="column is-four-fifths">
                       <input class="input" id="search_stock_ticker" type="text" placeholder="Search for a stock..." />
@@ -355,23 +382,6 @@
                     <div class="column">
                       <div class="control">
                         <button class="button is-primary" onclick="searchStock(event)">Search</button>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="columns">
-                    <div class="column">
-                      <div class="card">
-                        <div class="card-content has-text-centered">
-                          <div class="is-widget-icon">
-                            <span class="icon has-text-primary is-large">
-                              <span class="material-symbols-outlined" style="font-size: 48px;">
-                                finance_mode
-                              </span>
-                            </span>
-                          </div>
-                          <div class="is-widget-label">
-                          </div>
-                        </div>
                       </div>
                     </div>
                   </div>
@@ -547,7 +557,7 @@
   function addPredictionCard(e, id, title, description) {
     const container = e.target.closest('.is-widget-label'); 
 
-    const htmlString = `
+    var htmlString = `
       <div id="${id}" class="card">
         <div class="columns">
           <div class="column is-two-fifths">
@@ -604,7 +614,7 @@
   function addStockCard(e, ticker, name, exchange) {
     const container = e.target.closest('.is-widget-label'); 
 
-    const htmlString = `
+    var htmlString = `
       <div id="${ticker}" class="card">
         <div class="columns">
           <div class="column">
@@ -631,28 +641,91 @@
   async function addStock(e) {
     const metadata = e.target.closest('.cell'); 
     let count = parseInt(metadata.dataset.count, 10);
+    const symbol = e.target.closest('.card').id; 
 
     if ( count >= 10 ) {
       showNotification('No more than 10 stockpicks allowed!', 'is-info');
       return;
     }
 
-    const data = {"symbol": "APPL"}; 
     // Submit the data
-    const response = await fetch('/api/stocks/add', {
+    const response = await fetch('/api/stockpicks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        body: JSON.stringify({"symbol": symbol})
     });
     const result = await response.json();
     // Process the data
     if (response.ok) {
       console.log(result);
+      const { id, data } = result;
+      const { symbol, name, industry, price } = data;
+      console.log(industry);
+      console.log(price);
       metadata.dataset.count = count + 1;
       metadata.style.setProperty('--count', `'${count + 1}'`);
+      addOwnedStockCard(id, symbol, name, industry, price);
       showNotification('Stock added successfully!', 'is-success');
     }
   };
+
+  function addOwnedStockCard(id, symbol, name, industry, price) {
+    const container = document.getElementById("current_stocks");
+
+    var htmlString = `
+      <div id="{{ id }}"class="panel-block is-block">
+        <div class="columns">
+          <div class="column">
+            <div class="control">
+              <button class="button is-danger" onclick="removeStock(event)">Remove</button>
+            </div>
+          </div>
+          <div class="column">
+            <p>${symbol}</p>
+          </div>
+          <div class="column">
+            <p>${name}</p>
+          </div>
+          <div class="column">
+            <p>${industry}</p>
+          </div>
+          <div class="column">
+            <p>$ ${price}</p>
+          </div>
+        </div>
+      </div>
+    `;
+    container.insertAdjacentHTML('beforeend', htmlString);
+  }
+
+  async function removeStock(e) {
+    try {
+      // Get the data
+      const metadata = e.target.closest('.cell'); 
+      let count = parseInt(metadata.dataset.count, 10);
+
+      const row = e.target.closest('.panel-block'); 
+      const prediction_id = row.id;
+      // Submit the data
+      const response = await fetch(`/api/stockpicks/${prediction_id}`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' }
+      });
+      const result = await response.json();
+      // Process the data
+      if (response.ok) {
+          row.remove();
+          metadata.dataset.count = count - 1;
+          metadata.style.setProperty('--count', `'${count - 1}'`);
+          showNotification('Prediction removed!', 'is-success');
+          // Update your UI count here if needed
+      } else {
+          showNotification(result.error || 'Something went wrong', 'is-danger');
+      }
+    } catch (error) {
+      showNotification('Network error. Please try again.', 'is-danger');
+    }
+  }
 
 </script>
 {% endblock %}
