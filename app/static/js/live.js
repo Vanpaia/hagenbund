@@ -1,7 +1,7 @@
 var pause = false;
 var start = false;
 
-socket.on("player_update", function (data) {
+socket.on("player_update", function(data) {
   console.log(data.player);
   const player_list = document.getElementById("player-list");
   player_list.innerHTML = "";
@@ -13,19 +13,18 @@ socket.on("player_update", function (data) {
   }
 });
 
-socket.on("timer_status_update", function (data) {
+socket.on("timer_status_update", function(data) {
   pause = data.is_paused;
-  start = data.is_active;
   updateTimerUI(data.remaining_ms);
   console.log("Time received:", data.remaining_ms);
   console.log("Paused:", data.is_paused);
 });
 
-socket.on("game_status_update", function (data) {
+socket.on("game_status_update", function(data) {
   pause = data.is_paused;
   start = data.is_active;
   updateTimerUI(data.remaining_ms);
-  updateStateUI(data.current_round, data.round_data);
+  updateStateUI(data.current_round, data.total_rounds, data.round_data);
   console.log("Time received:", data.remaining_ms);
   console.log("Round:", data.current_round);
   console.log("Active:", data.is_active);
@@ -77,14 +76,30 @@ function updateTimerUI(value) {
   pauseButton.textContent = pause ? "UNPAUSE" : "PAUSE";
 }
 
-function updateStateUI(round, data) {
+function updateStateUI(round, total, data) {
   var roundCount = document.getElementById("round_count");
+  var roundTotal = document.getElementById("total_rounds");
+  var roundLengthInput = document.getElementById("roundLengthInput");
   var roundTitle = document.getElementById("prediction-card-title");
   var roundDescription = document.getElementById("prediction-card-description");
+  var timerCount = document.getElementById("timer_count");
 
-  roundCount.textContent = round.toString();
-  roundTitle.textContent = data.title;
-  roundDescription.textContent = data.description;
+  if (!start) {
+    roundLengthInput.classList.remove('is-hidden');
+    timerCount.textContent = "X";
+    roundCount.textContent = "X";
+    roundTotal.textContent = "X";
+    roundTitle.textContent = "Waiting for game to start...";
+    roundDescription.textContent = "";
+    delete roundDescription.dataset.uuid
+  } else {
+    roundLengthInput.classList.add('is-hidden');
+    roundCount.textContent = round.toString();
+    roundTotal.textContent = total.toString();
+    roundTitle.textContent = data.title;
+    roundDescription.textContent = data.description;
+    roundDescription.dataset.uuid = data.uuid;
+  }
 }
 
 function toggleActive() {

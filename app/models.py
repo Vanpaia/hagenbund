@@ -4,6 +4,7 @@ from flask import jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timezone
 from enum import Enum
+import uuid
 
 class Category(Enum):
     POL = "World Politics"
@@ -64,15 +65,19 @@ class Prediction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     title = db.Column(db.String(256), nullable=False)
+    uuid_key = db.Column(db.String(36), default=lambda: str(uuid.uuid4()), unique=True, index=True, nullable=True)
     description = db.Column(db.Text, nullable=True)
     category = db.Column(db.Enum(Category), nullable=False)
     created_at = db.Column(db.Date, default= lambda: datetime.now(timezone.utc))
-
+    
     def to_dict(self):
+        formatted_date = self.created_at.isoformat() if self.created_at else None
         content = {"title": self.title,
-         "description": self.description,
-         "category": self.category.value,
-         "created_at": self.created_at}
+                   "uuid": self.uuid_key,
+                   "description": self.description,
+                   "category": self.category.value,
+                   "user_id": self.user_id,
+                   "created_at": formatted_date}
         return content
 
 class StockPick(db.Model):

@@ -6,8 +6,8 @@
     <section class="hero is-small is-hero-bar">
       <div class="hero-body">
         <div class="container has-text-centered">
-          <p class="sub-title">Remaining time: <span id="timer_count"></span></p>
-          <p class="sub-title">Current round: <span id="round_count"></span></p>
+          <p class="sub-title">Remaining time: <span id="timer_count">X</span></p>
+          <p class="sub-title">Current round: <span id="round_count">X</span> / <span id="total_rounds">X</span></p>
           <p class="sub-title">Players online:</p>
           <ul id="player-list">
           </ul>
@@ -16,11 +16,12 @@
       {% if user.is_admin %}
         <div class="hero-foot">
           <div class="container has-text-centered">
+            <input id="roundLengthInput" class="input is-primary is-small" type="number" placeholder="Link input"/>
             <button id="startStopButton" class="button is-medium is-primary" onclick='toggleActive()'>START</button>
             <button id="timerButton" class="button is-medium is-primary" onclick='toggleTimer()'>PAUSE</button>
             <button id="nextButton" class="button is-medium is-primary" onclick='nextRound()'>NEXT</button>
             <button id="previousButton" class="button is-medium is-primary" onclick='previousRound()'>PREVIOUS</button>
-          </div
+          </div>
         </div>
       {% endif %}
     </section>
@@ -30,6 +31,7 @@
           <div class="card">
             <div class="card-content has-text-centered">
               <h2 id="prediction-card-title" class="subtitle is-spaced">
+                Waiting for game to start...
               </h2>
               <p id="prediction-card-description" class="has-text-justified">
               </p>
