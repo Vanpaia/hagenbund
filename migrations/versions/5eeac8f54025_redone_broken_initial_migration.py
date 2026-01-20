@@ -1,8 +1,16 @@
+<<<<<<<< HEAD:migrations/versions/17599ee0bbae_restart_initial_migration.py
 """restart initial migration
 
 Revision ID: 17599ee0bbae
 Revises: 
 Create Date: 2026-01-18 13:29:22.427543
+========
+"""redone broken initial migration
+
+Revision ID: 5eeac8f54025
+Revises: 
+Create Date: 2026-01-19 10:33:00.791226
+>>>>>>>> 703a17e (almost done, going home):migrations/versions/5eeac8f54025_redone_broken_initial_migration.py
 
 """
 from alembic import op
@@ -10,7 +18,11 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
+<<<<<<<< HEAD:migrations/versions/17599ee0bbae_restart_initial_migration.py
 revision = '17599ee0bbae'
+========
+revision = '5eeac8f54025'
+>>>>>>>> 703a17e (almost done, going home):migrations/versions/5eeac8f54025_redone_broken_initial_migration.py
 down_revision = None
 branch_labels = None
 depends_on = None
