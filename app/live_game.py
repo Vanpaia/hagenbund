@@ -1,4 +1,5 @@
 import time
+from collections import defaultdict
 
 class GameState:
     def __init__(self, round_length = 30000):
@@ -7,16 +8,16 @@ class GameState:
         self.is_paused = True
         self.is_active = False 
         self.pause_time_remaining = round_length
-        self.players = {}
+        self.players = set()
         self.questions = []
         self.current_round = 1 
         self.total_rounds = len(self.questions)
-        self.submissions = {}
+        self.submissions = defaultdict(dict)
+        self.is_processing_round = False
 
-    def init_game(self, questions, players={}, round_length=30000):
+    def init_game(self, questions, round_length=30000):
         self.is_active = True
         self.round_length = round_length
-        self.players = players
         self.questions = questions
         self.total_rounds = len(questions)
 
@@ -28,17 +29,18 @@ class GameState:
         self.pause_time_remaining = self.round_length
 
         status = self.get_game_status()
-        socketio.emit('game_status_update', status)
+        socketio.emit('game_status_update', status, to='game_room')
 
     def reset(self):
         self.is_paused = True
         self.is_active = False
         self.pause_time_remaining = self.round_length
-        self.players = {}
+        self.players = set()
         self.questions = []
         self.current_round = 1
         self.total_rounds = len(self.questions)
-        self.submissions = {}
+        self.submissions = defaultdict(dict)
+        self.is_processing_round = False
 
     def pause_round(self):
         self.is_paused = True
@@ -51,14 +53,24 @@ class GameState:
         self.end_time = now + self.pause_time_remaining 
 
     def next_round(self, socketio):
-        if self.current_round < self.total_rounds:
-            self.current_round += 1
-            self.start_round(socketio)
+        try:
+            if self.current_round < self.total_rounds:
+                self.current_round += 1
+                self.start_round(socketio)
+        finally:
+            self.is_processing_round = False
 
     def previous_round(self, socketio):
         if self.current_round > 1:
             self.current_round -= 1
         self.start_round(socketio)
+
+    def end_round(self, socketio):
+        round_data = self.questions[self.current_round-1] if len(self.questions) > 0 else {}
+        socketio.emit('end_round', {"uuid": round_data["uuid"], "round": self.current_round})
+        self.is_processing_round = True
+        socketio.sleep(0.5) 
+        self.next_round(socketio)
 
     def get_remaining_ms(self):
         if self.is_paused:
@@ -77,6 +89,7 @@ class GameState:
             'is_active': self.is_active,
             'current_round': self.current_round,
             'total_rounds': self.total_rounds,
+            'round_length': self.round_length,
             'round_data': round_data,
         }
         return status
@@ -91,7 +104,7 @@ class GameState:
 
     def emit_timer_update(self, socketio):
         status = self.get_timer_status()
-        socketio.emit('timer_status_update', status)
+        socketio.emit('timer_status_update', status, to='game_room')
 
         return status["remaining_ms"]
 
@@ -101,4 +114,4 @@ def background_timer_task(socketio, state):
         socketio.sleep(0.5)
         remaining = state.emit_timer_update(socketio)
         if remaining <= 0:
-            state.next_round(socketio)
+            state.end_round(socketio)
