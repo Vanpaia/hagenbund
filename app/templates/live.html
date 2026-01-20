@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block content %}
+  <!-- Main Content -->
+  <div class="main-content">
+    <progress id="timer_bar" class="progress is-primary reading-tracher-fixed" value="0" max="30"></progress>
+    <section class="hero is-small is-hero-bar">
+      <div class="hero-body">
+        <div class="container has-text-centered">
+          <p class="sub-title">Remaining time: <span id="timer_count"></span></p>
+          <p class="sub-title">Current round: <span id="round_count"></span></p>
+          <p class="sub-title">Players online:</p>
+          <ul id="player-list">
+          </ul>
+        </div>
+      </div>
+      {% if user.is_admin %}
+        <div class="hero-foot">
+          <div class="container has-text-centered">
+            <button id="startStopButton" class="button is-medium is-primary" onclick='toggleActive()'>START</button>
+            <button id="timerButton" class="button is-medium is-primary" onclick='toggleTimer()'>PAUSE</button>
+            <button id="nextButton" class="button is-medium is-primary" onclick='nextRound()'>NEXT</button>
+            <button id="previousButton" class="button is-medium is-primary" onclick='previousRound()'>PREVIOUS</button>
+          </div
+        </div>
+      {% endif %}
+    </section>
+    <section class="section is-main-section">
+      <div class="columns is-centered is-mobile">
+        <div class="column is-three-fifths-desktop">
+          <div class="card">
+            <div class="card-content has-text-centered">
+              <h2 id="prediction-card-title" class="subtitle is-spaced">
+              </h2>
+              <p id="prediction-card-description" class="has-text-justified">
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="field has-addons" style="align-items: center;">
+        <div class="control" style="flex-grow: 1; background: white;">
+          <input 
+            class="slider is-primary" 
+            type="range" 
+            step="1" 
+            min="1" 
+            max="99" 
+            value="50" 
+            autocomplete="off"
+            id="sliderInput" 
+            style="width: 100%; display: block; background: white;">
+        </div>
+        <p class="mr-6"><span id="sliderValue" class="ml-6">50</span>%</p>
+        <div class="control">
+          <button class="button is-info" onclick="submitVote()">Send</button>
+        </div>
+      </div>
+
+    </section>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/live.js') }}"></script>
+{% endblock %}

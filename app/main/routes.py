@@ -14,6 +14,16 @@ from collections import defaultdict
 def index():
     return redirect(url_for('main.prediction_overview'))
 
+@bp.route('/chat', methods=['GET'])
+@login_required
+def chatroom():
+    return render_template('chatroom.html', title='Gentleboys Chatroom', user=current_user)
+
+@bp.route('/live', methods=['GET'])
+@login_required
+def live_game():
+    return render_template('live.html', title='Gentleboys Live Game', user=current_user)
+
 @bp.route('/2026-predictions', methods=['GET'])
 @login_required
 def prediction_overview():

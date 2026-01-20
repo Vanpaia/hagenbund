@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+  <!-- Main Content -->
+  <div class="main-content">
+    <section class="hero is-small is-hero-bar">
+      <div class="hero-body">
+        <div class="container has-text-centered">
+          <p class="title">Gentleboys Chatroom</p>
+          <p class="sub-title">Currently online:</p>
+          <ul id="player-list">
+          </ul>
+        </div>
+      </div>
+    </section>
+    <section class="section is-main-section">
+      <div class="columns is-centered is-mobile">
+        <div class="column is-three-fifths-desktop">
+          <div class="card">
+            <div class="card-content has-text-centered">
+              <div class="field has-addons">
+                <div class="control is-expanded">
+                  <input id="message_input" class="input" type="text" placeholder="Your message">
+                </div>
+                <div class="control">
+                  <button class="button is-info" onclick="sendMessage()">
+                    Send 
+                  </button>
+                </div>
+              </div>
+
+              <ul id="messages"></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/chatroom.js') }}"></script>
+{% endblock %}
