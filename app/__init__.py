@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_socketio import SocketIO
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager
@@ -9,6 +10,7 @@ from logging.handlers import RotatingFileHandler
 
 from config import Config
 
+socketio = SocketIO()
 db = SQLAlchemy()
 migrate = Migrate()
 login = LoginManager()
@@ -22,6 +24,7 @@ def create_app(config_class = Config):
     db.init_app(app)
     migrate.init_app(app, db)
     login.init_app(app)
+    socketio.init_app(app)
 
     from app.errors import bp as errors_bp
     app.register_blueprint(errors_bp)
@@ -31,6 +34,8 @@ def create_app(config_class = Config):
 
     from app.main import bp as main_bp
     app.register_blueprint(main_bp)
+    
+    from app.main import events
 
     if not os.path.exists('logs'):
         os.mkdir('logs')

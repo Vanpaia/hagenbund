@@ -19,3 +19,76 @@ NameError: name 'all_sorted_predictions' is not defined. Did you mean: 'all_sort
 2026-01-05 21:20:15,390 INFO: app startup [in /home/hagen/Projects/2026_predictions/app/__init__.py:42]
 2026-01-05 21:20:33,925 INFO: 1 [in /home/hagen/Projects/2026_predictions/app/main/routes.py:31]
 2026-01-05 21:20:33,926 INFO: defaultdict(<class 'list'>, {'POL': [<Prediction 1>]}) [in /home/hagen/Projects/2026_predictions/app/main/routes.py:36]
+2026-01-18 13:19:24,187 INFO: app startup [in /home/hagen/Projects/hagenbund/app/__init__.py:42]
+2026-01-18 13:19:50,981 INFO: app startup [in /home/hagen/Projects/hagenbund/app/__init__.py:42]
+2026-01-18 13:24:29,786 INFO: app startup [in /home/hagen/Projects/hagenbund/app/__init__.py:42]
+2026-01-18 13:27:44,095 INFO: app startup [in /home/hagen/Projects/hagenbund/app/__init__.py:42]
+2026-01-18 13:29:00,903 INFO: app startup [in /home/hagen/Projects/hagenbund/app/__init__.py:42]
+2026-01-18 13:29:22,403 INFO: app startup [in /home/hagen/Projects/hagenbund/app/__init__.py:42]
+2026-01-18 13:29:27,876 INFO: app startup [in /home/hagen/Projects/hagenbund/app/__init__.py:42]
+2026-01-18 13:35:24,711 INFO: app startup [in /home/hagen/Projects/hagenbund/app/__init__.py:42]
+2026-01-18 13:35:27,159 ERROR: Exception on / [GET] [in /home/hagen/Projects/hagenbund/venv/lib/python3.12/site-packages/flask/app.py:875]
+Traceback (most recent call last):
+  File "/home/hagen/Projects/hagenbund/venv/lib/python3.12/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/hagenbund/venv/lib/python3.12/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/hagenbund/venv/lib/python3.12/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/hagenbund/venv/lib/python3.12/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/hagenbund/venv/lib/python3.12/site-packages/flask_login/utils.py", line 285, in decorated_view
+    return current_app.login_manager.unauthorized()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hagen/Projects/hagenbund/venv/lib/python3.12/site-packages/flask_login/login_manager.py", line 187, in unauthorized
+    flash(self.login_message, category=self.login_message_category)
+  File "/home/hagen/Projects/hagenbund/venv/lib/python3.12/site-packages/flask/helpers.py", line 342, in flash
+    session["_flashes"] = flashes
+    ~~~~~~~^^^^^^^^^^^^
+  File "/home/hagen/Projects/hagenbund/venv/lib/python3.12/site-packages/flask/sessions.py", line 104, in _fail
+    raise RuntimeError(
+RuntimeError: The session is unavailable because no secret key was set.  Set the secret_key on the application to something unique and secret.
+2026-01-18 13:35:51,129 INFO: app startup [in /home/hagen/Projects/hagenbund/app/__init__.py:42]
+2026-01-18 13:37:52,558 INFO: app startup [in /home/hagen/Projects/hagenbund/app/__init__.py:42]
+2026-01-18 13:38:21,619 INFO: app startup [in /home/hagen/Projects/hagenbund/app/__init__.py:42]
+2026-01-18 13:38:28,496 INFO: 1 [in /home/hagen/Projects/hagenbund/app/main/routes.py:31]
+2026-01-18 13:38:28,496 INFO: defaultdict(<class 'list'>, {}) [in /home/hagen/Projects/hagenbund/app/main/routes.py:36]
+2026-01-18 13:40:35,157 INFO: app startup [in /home/hagen/Projects/hagenbund/app/__init__.py:42]
+2026-01-18 13:40:39,168 INFO: app startup [in /home/hagen/Projects/hagenbund/app/__init__.py:42]
+2026-01-18 13:40:53,259 INFO: app startup [in /home/hagen/Projects/hagenbund/app/__init__.py:42]
+2026-01-18 13:41:00,544 INFO: app startup [in /home/hagen/Projects/hagenbund/app/__init__.py:42]
+2026-01-18 13:41:24,778 INFO: app startup [in /home/hagen/Projects/hagenbund/app/__init__.py:42]
+2026-01-18 16:31:03,663 INFO: app startup [in /home/hagen/Projects/hagenbund/app/__init__.py:42]
+2026-01-18 16:31:10,940 INFO: 1 [in /home/hagen/Projects/hagenbund/app/main/routes.py:31]
+2026-01-18 16:31:10,940 INFO: defaultdict(<class 'list'>, {}) [in /home/hagen/Projects/hagenbund/app/main/routes.py:36]
+2026-01-18 16:58:02,305 INFO: app startup [in /home/hagen/Projects/hagenbund/app/__init__.py:47]
+2026-01-18 16:58:02,589 INFO: app startup [in /home/hagen/Projects/hagenbund/app/__init__.py:47]
+2026-01-18 16:58:10,443 INFO: 1 [in /home/hagen/Projects/hagenbund/app/main/routes.py:31]
+2026-01-18 16:58:10,443 INFO: defaultdict(<class 'list'>, {'POL': [<Prediction 1>], 'EUR': [<Prediction 2>]}) [in /home/hagen/Projects/hagenbund/app/main/routes.py:36]
+2026-01-18 16:58:44,082 INFO: 2 [in /home/hagen/Projects/hagenbund/app/main/routes.py:31]
+2026-01-18 16:58:44,082 INFO: defaultdict(<class 'list'>, {}) [in /home/hagen/Projects/hagenbund/app/main/routes.py:36]
+2026-01-18 16:59:26,506 INFO: app startup [in /home/hagen/Projects/hagenbund/app/__init__.py:47]
+2026-01-18 22:04:07,709 INFO: app startup [in /home/hagen/Projects/hagenbund/app/__init__.py:47]
+2026-01-18 22:04:07,993 INFO: app startup [in /home/hagen/Projects/hagenbund/app/__init__.py:47]
+2026-01-18 22:04:39,212 INFO: 2 [in /home/hagen/Projects/hagenbund/app/main/routes.py:41]
+2026-01-18 22:04:39,212 INFO: defaultdict(<class 'list'>, {}) [in /home/hagen/Projects/hagenbund/app/main/routes.py:46]
+2026-01-18 22:07:08,603 INFO: app startup [in /home/hagen/Projects/hagenbund/app/__init__.py:47]
+2026-01-18 22:07:08,887 INFO: app startup [in /home/hagen/Projects/hagenbund/app/__init__.py:47]
+2026-01-18 22:08:28,988 INFO: app startup [in /home/hagen/Projects/hagenbund/app/__init__.py:47]
+2026-01-18 22:08:29,287 INFO: app startup [in /home/hagen/Projects/hagenbund/app/__init__.py:47]
+2026-01-18 22:25:19,202 INFO: app startup [in /home/hagen/Projects/hagenbund/app/__init__.py:47]
+2026-01-18 22:25:19,483 INFO: app startup [in /home/hagen/Projects/hagenbund/app/__init__.py:47]
+2026-01-18 22:25:34,416 INFO: 2 [in /home/hagen/Projects/hagenbund/app/main/routes.py:41]
+2026-01-18 22:25:34,416 INFO: defaultdict(<class 'list'>, {}) [in /home/hagen/Projects/hagenbund/app/main/routes.py:46]
+2026-01-18 22:26:39,988 INFO: app startup [in /home/hagen/Projects/hagenbund/app/__init__.py:47]
+2026-01-18 22:26:45,023 INFO: app startup [in /home/hagen/Projects/hagenbund/app/__init__.py:47]
+2026-01-18 22:26:45,303 INFO: app startup [in /home/hagen/Projects/hagenbund/app/__init__.py:47]
+2026-01-18 22:26:52,695 INFO: app startup [in /home/hagen/Projects/hagenbund/app/__init__.py:47]
+2026-01-18 22:26:55,896 INFO: app startup [in /home/hagen/Projects/hagenbund/app/__init__.py:47]
+2026-01-18 22:26:56,180 INFO: app startup [in /home/hagen/Projects/hagenbund/app/__init__.py:47]
+2026-01-18 22:28:52,181 INFO: app startup [in /home/hagen/Projects/hagenbund/app/__init__.py:47]
+2026-01-18 22:28:52,471 INFO: app startup [in /home/hagen/Projects/hagenbund/app/__init__.py:47]
