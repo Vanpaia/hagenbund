@@ -10,6 +10,7 @@ from logging.handlers import RotatingFileHandler
 
 from config import Config
 
+feature_flag = False
 socketio = SocketIO()
 db = SQLAlchemy()
 migrate = Migrate()

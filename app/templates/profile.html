@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <!-- Main Content -->
+  <div class="main-content">
+    <section class="hero is-hero-bar">
+      <div class="hero-body">
+        <div class="container has-text-centered">
+          <div class="grid">
+            <div class="cell">
+            </div>
+            <div class="cell">
+              <div class="block">
+                <h1 class="title">
+                  The Gentleboy {{ user.user_name }}
+                </h1>
+              </div>
+            </div>
+            <div class="cell">
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="section is-main-section">
+      {% if total_likelihood %}
+      <div class="container has-text-centered">
+        <div class="grid">
+          <div class="cell">
+          </div>
+          <div class="cell">
+            <div class="block">
+              <h1 class="title">
+                Total Possible Points {{ total_points }}
+              </h1>
+              <h1 class="title">
+                Total Likelihood {{ total_likelihood }} %
+              </h1>
+              <br>
+            </div>
+          </div>
+          <div class="cell">
+          </div>
+        </div>
+      </div>
+      {% endif %}
+      <div class="fixed-grid has-6-cols">
+        <div class="grid">
+          <div class="cell">
+            <div class="box has-background-danger has-text-white has-text-centered is-flex is-flex-direction-column is-justify-content-center is-align-items-center">
+              <span class="icon has-text-white is-large">
+                <span class="material-symbols-outlined" style="font-size: 48px;">
+                  globe
+                </span>
+              </span>
+            </div>
+          </div>
+          {% for i in range(5) %}
+            <div class="cell">
+              {% if predictions.POL[i] %}
+                <div class="box">
+                  <strong>{{ predictions.POL[i].title }}</strong><br>
+                  {% if predictions.POL[i].points %}
+                    <p>{{ predictions.POL[i].points }} / {{ "%.2f"|format(predictions.POL[i].likelihood) }} %</p>
+                  {% endif %}
+                </div>
+              {% else %}
+                <div class="box has-background-light" style="visibility: hidden;">
+                  &nbsp;
+                </div>
+              {% endif %}
+            </div>
+          {% endfor %}
+          <div class="cell">
+            <div class="box has-background-link has-text-white has-text-centered is-flex is-flex-direction-column is-justify-content-center is-align-items-center">
+              <span class="icon has-text-white is-large">
+                <span class="material-symbols-outlined" style="font-size: 48px;">
+                  euro_symbol
+                </span>
+              </span>
+            </div>
+          </div>
+          {% for i in range(5) %}
+            <div class="cell">
+              {% if predictions.EUR[i] %}
+                <div class="box has-background-light">
+                  <strong>{{ predictions.EUR[i].title }}</strong><br>
+                  {% if predictions.EUR[i].points %}
+                    <p>{{ predictions.EUR[i].points }} / {{ "%.2f"|format(predictions.EUR[i].likelihood) }} %</p>
+                  {% endif %}
+                </div>
+              {% else %}
+                <div class="box has-background-light" style="visibility: hidden;">
+                  &nbsp;
+                </div>
+              {% endif %}
+            </div>
+          {% endfor %}
+          <div class="cell">
+            <div class="box has-background-warning has-text-white has-text-centered is-flex is-flex-direction-column is-justify-content-center is-align-items-center">
+              <span class="icon has-text-white is-large">
+                <span class="material-symbols-outlined" style="font-size: 48px;">
+                  sports_and_outdoors 
+                </span>
+              </span>
+            </div>
+          </div>
+          {% for i in range(5) %}
+            <div class="cell">
+              {% if predictions.ENT[i] %}
+                <div class="box">
+                  <strong>{{ predictions.ENT[i].title }}</strong><br>
+                  {% if predictions.ENT[i].points %}
+                    <p>{{ predictions.ENT[i].points }} / {{ "%.2f"|format(predictions.ENT[i].likelihood) }} %</p>
+                  {% endif %}
+                </div>
+              {% else %}
+                <div class="box has-background-light" style="visibility: hidden;">
+                  &nbsp;
+                </div>
+              {% endif %}
+            </div>
+          {% endfor %}
+          <div class="cell">
+            <div class="box has-background-info has-text-white has-text-centered is-flex is-flex-direction-column is-justify-content-center is-align-items-center">
+              <span class="icon has-text-white is-large">
+                <span class="material-symbols-outlined" style="font-size: 48px;">
+                  experiment
+                </span>
+              </span>
+            </div>
+          </div>
+          {% for i in range(5) %}
+            <div class="cell">
+              {% if predictions.SCI[i] %}
+                <div class="box">
+                  <strong>{{ predictions.SCI[i].title }}</strong><br>
+                  {% if predictions.SCI[i].points %}
+                    <p>{{ predictions.SCI[i].points }} / {{ "%.2f"|format(predictions.SCI[i].likelihood) }} %</p>
+                  {% endif %}
+                </div>
+              {% else %}
+                <div class="box has-background-light" style="visibility: hidden;">
+                  &nbsp;
+                </div>
+              {% endif %}
+            </div>
+          {% endfor %}
+          <div class="cell">
+            <div class="box has-background-success has-text-white has-text-centered is-flex is-flex-direction-column is-justify-content-center is-align-items-center">
+              <span class="icon has-text-white is-large">
+                <span class="material-symbols-outlined" style="font-size: 48px;">
+                  finance_mode
+                </span>
+              </span>
+            </div>
+          </div>
+          {% for i in range(5) %}
+            <div class="cell">
+              {% if predictions.ECO[i] %}
+                <div class="box">
+                  <strong>{{ predictions.ECO[i].title }}</strong><br>
+                  {% if predictions.ECO[i].points %}
+                    <p>{{ predictions.ECO[i].points }} / {{ "%.2f"|format(predictions.ECO[i].likelihood) }} %</p>
+                  {% endif %}
+                </div>
+              {% else %}
+                <div class="box has-background-light" style="visibility: hidden;">
+                  &nbsp;
+                </div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+      <nav id="current_stocks" class="panel is-primary">
+        <p class="panel-heading">Your Portfolio</p>
+        {% for stock in stockpicks %}
+          <div id="{{ stock.id }}"class="panel-block is-block">
+            <div class="columns">
+              <div class="column">
+                <div class="control">
+                  <button class="button is-danger" onclick="removeStock(event)">Remove</button>
+                </div>
+              </div>
+              <div class="column">
+                <p>{{ stock.symbol }}</p>
+              </div>
+              <div class="column">
+                <p>{{ stock.name }}</p>
+              </div>
+              <div class="column">
+                <p>{{ stock.industry }}</p>
+              </div>
+              <div class="column">
+                <p>$ {{ stock.current_price }}</p>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </nav>
+    </section>
+  </div>
+{% endblock %}
