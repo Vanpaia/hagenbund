@@ -1,5 +1,6 @@
 from flask_socketio import emit, join_room, leave_room
-from .. import socketio, game_instance
+from .. import socketio
+from app.live_game import game_instance
 from app.live_game import background_timer_task
 from flask_login import current_user
 from app.registry import online_users
@@ -47,10 +48,11 @@ def game_connect():
 @socketio.on('submit_prediction_vote')
 def handle_submission(submission):
     if not game_instance.submissions[submission["round"]]:
-        game_instance.submissions[submission["round"]] = {"uuid": submission["uuid"], "votes": {}}
-    game_instance.submissions[submission["round"]]["votes"][current_user.id] = int(submission["vote"])
+        game_instance.submissions[submission["round"]] = {"id": submission["id"], "votes": {}}
+    remaining = game_instance.get_remaining_ms(round_num=submission["round"])
+    game_instance.submissions[submission["round"]]["votes"][current_user.id] = {"vote": int(submission["vote"]), "speed": game_instance.round_length - remaining}
     print(game_instance.submissions)
-    if len(game_instance.submissions[submission["round"]]) >= len(game_instance.players):
+    if len(game_instance.submissions[submission["round"]]) >= game_instance.total_players:
         if not game_instance.is_processing_round:
             if submission["round"] == game_instance.current_round:
                 game_instance.is_processing_round = True
@@ -69,12 +71,15 @@ def previous_round():
     emit('game_status_update', status, broadcast=True, to='game_room')
 
 @socketio.on('start_game')
-def handle_start(round_length):
+def handle_start(game_config):
     predictions = Prediction.query.all()
     questions = [prediction.to_dict() for prediction in predictions]
     kwargs = {"questions": questions}
-    if round_length.get('data'):
-        kwargs["round_length"] = int(round_length['data'])
+    if game_config["data"].get('length'):
+        kwargs["round_length"] = int(game_config["data"]['length'])
+    if game_config["data"].get('player'):
+        kwargs["player_amount"] = int(game_config["data"]['player'])
+    print(kwargs)
     game_instance.init_game(**kwargs)
     game_instance.start_round(socketio)
     socketio.start_background_task(background_timer_task, socketio, game_instance)
@@ -83,9 +88,14 @@ def handle_start(round_length):
 
 @socketio.on('stop_game')
 def handle_stop():
+    emit('clear_game', broadcast=True, to='game_room')
     game_instance.reset()
     status = game_instance.get_game_status()
     emit('game_status_update', status, broadcast=True, to='game_room')
+
+@socketio.on('save_game')
+def handle_save():
+        game_instance.end_game(socketio)
 
 @socketio.on('toggle_pause')
 def handle_toggle():

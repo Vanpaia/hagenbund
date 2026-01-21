@@ -10,13 +10,10 @@ from logging.handlers import RotatingFileHandler
 
 from config import Config
 
-from app.live_game import GameState
-
 socketio = SocketIO()
 db = SQLAlchemy()
 migrate = Migrate()
 login = LoginManager()
-game_instance = GameState()
 login.login_view = 'auth.login'
 login.login_message = 'Please log in to access this page.'
 

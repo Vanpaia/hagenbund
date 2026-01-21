@@ -2,7 +2,7 @@ from flask import jsonify, render_template, request, redirect, url_for, current_
 from flask_login import login_required, current_user
 from app import db
 from app.main import bp
-from app.models import Prediction, Category, User, StockPick, StockUpdate
+from app.models import Prediction, Category, User, StockPick, StockUpdate, PredictionVote
 from app.utils.stocks import search_stock_ticker, get_stock_info
 
 from sqlalchemy import func
@@ -215,6 +215,25 @@ def fetch_stockpicks():
         'message': 'Search successfull',
         'id': None,
         'data': data
+    }), 200
+
+@bp.route('/clear_all_votes', methods=['GET'])
+@login_required
+def clear_all_votes():
+    """clear all votes"""
+    try:
+        # This deletes all rows in the 'prediction_vote' table
+        db.session.query(PredictionVote).delete()
+        db.session.commit()
+        print("All votes cleared successfully.")
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error clearing votes: {e}")
+
+    return jsonify({
+        'message': 'Bulk delete successfull',
+        'id': None,
+        'data': None,
     }), 200
 
 @bp.route('/api/stockpicks/<int:stock_id>', methods=['PUT', 'PATCH'])

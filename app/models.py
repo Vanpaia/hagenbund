@@ -69,16 +69,32 @@ class Prediction(db.Model):
     description = db.Column(db.Text, nullable=True)
     category = db.Column(db.Enum(Category), nullable=False)
     created_at = db.Column(db.Date, default= lambda: datetime.now(timezone.utc))
+
+    points = db.Column(db.Integer, nullable=True)
+    likelihood = db.Column(db.Float, nullable=True)
     
     def to_dict(self):
         formatted_date = self.created_at.isoformat() if self.created_at else None
         content = {"title": self.title,
                    "uuid": self.uuid_key,
+                   "id": self.id,
                    "description": self.description,
                    "category": self.category.value,
                    "user_id": self.user_id,
                    "created_at": formatted_date}
         return content
+
+class PredictionVote(db.Model):
+    __tablename__ = "prediction_vote"
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    prediction_id = db.Column(db.Integer, db.ForeignKey("prediction.id"), nullable=False)
+    vote = db.Column(db.Integer, nullable=False)
+    speed = db.Column(db.Float, nullable=False)
+
+    __table_args__ = (
+            db.UniqueConstraint('user_id', 'prediction_id', name='_user_prediction_uc'),
+        )
 
 class StockPick(db.Model):
     __tablename__ = "stockpick"

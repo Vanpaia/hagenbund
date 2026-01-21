@@ -26,7 +26,28 @@ socket.on("timer_status_update", function(data) {
 });
 
 socket.on("end_round", function(data) {
-  socket.emit("submit_prediction_vote", { vote: slider.value, uuid: data.uuid, round: data.round });
+  socket.emit("submit_prediction_vote", { vote: slider.value, id: data.id, round: data.round });
+});
+
+socket.on("end_game", function() {
+  var gameCard = document.getElementById("game-card");
+  gameOverState = `
+              <h2 class="subtitle is-spaced">
+                Game Over!
+              </h2>`;
+  gameCard.innerHTML = gameOverState;
+
+});
+
+socket.on("clear_game", function() {
+  var gameCard = document.getElementById("game-card");
+  gameOverState = `
+              <h2 id="prediction-card-title" class="subtitle is-spaced">
+                Waiting for game to start...
+              </h2>
+              <p id="prediction-card-description" class="has-text-justified">
+              </p>`;
+  gameCard.innerHTML = gameOverState;
 });
 
 socket.on("game_status_update", function(data) {
@@ -52,7 +73,9 @@ slider.addEventListener("input", () => {
 
 function submitVote() {
   console.log(slider.value);
-  socket.emit("submit_prediction_vote", { vote: slider.value, uuid: current_round['data']['uuid'], round: current_round['round'] });
+  socket.emit("submit_prediction_vote", { vote: slider.value, id: current_round['data']['id'], round: current_round['round'] });
+  slider.value = 50;
+  output.textContent = slider.value;
 }
 
 function updateTimerUI(value) {
@@ -77,10 +100,34 @@ function updateTimerUI(value) {
 
   const activeButton = document.getElementById("startStopButton");
   const pauseButton = document.getElementById("timerButton");
+  const startState = `
+              <span class="icon has-text-white is-large">
+                <span class="material-symbols-outlined" style="font-size: 48px;">
+                  play_arrow
+                </span>
+              </span>`
+  const stopState = `
+              <span class="icon has-text-white is-large">
+                <span class="material-symbols-outlined" style="font-size: 48px;">
+                  stop
+                </span>
+              </span>`
+  const pauseState = `
+              <span class="icon has-text-white is-large">
+                <span class="material-symbols-outlined" style="font-size: 48px;">
+                  pause
+                </span>
+              </span>`
+  const unpauseState = `
+              <span class="icon has-text-white is-large">
+                <span class="material-symbols-outlined" style="font-size: 48px;">
+                  resume
+                </span>
+              </span>`
 
   if (activeButton && pauseButton) {
-    activeButton.textContent = start ? "STOP" : "START";
-    pauseButton.textContent = pause ? "UNPAUSE" : "PAUSE";
+    activeButton.innerHTML = start ? stopState : startState;
+    pauseButton.innerHTML = pause ? pauseState : unpauseState;
   }
 }
 
@@ -88,6 +135,7 @@ function updateStateUI(round, total, length, data) {
   var roundCount = document.getElementById("round_count");
   var roundTotal = document.getElementById("total_rounds");
   var roundLengthInput = document.getElementById("roundLengthInput");
+  var playerAmountInput = document.getElementById("playerAmountInput");
   var roundTitle = document.getElementById("prediction-card-title");
   var roundDescription = document.getElementById("prediction-card-description");
   var timerCount = document.getElementById("timer_count");
@@ -95,8 +143,9 @@ function updateStateUI(round, total, length, data) {
   var timerBar = document.getElementById("timer_bar");
 
   if (!start) {
-    if (roundLengthInput) {
+    if (roundLengthInput && playerAmountInput) {
       roundLengthInput.classList.remove('is-hidden');
+      playerAmountInput.classList.remove('is-hidden');
     }
     timerCount.textContent = "X";
     roundCount.textContent = "X";
@@ -105,8 +154,9 @@ function updateStateUI(round, total, length, data) {
     roundDescription.textContent = "";
     rangeButton.disabled = true;
   } else {
-    if (roundLengthInput) {
+    if (roundLengthInput && playerAmountInput) {
       roundLengthInput.classList.add('is-hidden');
+      playerAmountInput.classList.add('is-hidden');
     }
     roundCount.textContent = round.toString();
     roundTotal.textContent = total.toString();
@@ -121,8 +171,12 @@ function updateStateUI(round, total, length, data) {
 function toggleActive() {
   if (!start) {
     var roundLengthInput = document.getElementById("roundLengthInput");
+    var playerAmountInput = document.getElementById("playerAmountInput");
     var lengthInput = roundLengthInput.value;
-    socket.emit("start_game", { data: lengthInput });
+    var playerAmount = playerAmountInput.value;
+    var game_config = { data: { length: lengthInput, player: playerAmount } }
+    console.log(game_config)
+    socket.emit("start_game", game_config);
   } else {
     socket.emit("stop_game");
   }
@@ -140,4 +194,9 @@ function nextRound() {
 
 function previousRound() {
   socket.emit("previous_round");
+}
+
+
+function saveGame() {
+  socket.emit("save_game");
 }
