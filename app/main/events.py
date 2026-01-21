@@ -41,18 +41,23 @@ def game_connect():
         join_room('game_room')
         game_instance.players.add((current_user.id, current_user.user_name))
         emit('player_update', list(game_instance.players), to='game_room')
+        emit('player_info', current_user.id)
         if game_instance.is_active:
             status = game_instance.get_game_status()
             emit('game_status_update', status, broadcast=True, to='game_room')
 
 @socketio.on('submit_prediction_vote')
 def handle_submission(submission):
+    if game_instance.total_players > 1:
+        if current_user.id == submission["id"]:
+            return
     if not game_instance.submissions[submission["round"]]:
         game_instance.submissions[submission["round"]] = {"id": submission["id"], "votes": {}}
     remaining = game_instance.get_remaining_ms(round_num=submission["round"])
     game_instance.submissions[submission["round"]]["votes"][current_user.id] = {"vote": int(submission["vote"]), "speed": game_instance.round_length - remaining}
     print(game_instance.submissions)
-    if len(game_instance.submissions[submission["round"]]) >= game_instance.total_players:
+    target_votes = max(game_instance.total_players - 1, 1)
+    if len(game_instance.submissions[submission["round"]]) >= target_votes:
         if not game_instance.is_processing_round:
             if submission["round"] == game_instance.current_round:
                 game_instance.is_processing_round = True

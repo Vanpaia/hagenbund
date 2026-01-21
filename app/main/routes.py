@@ -1,8 +1,9 @@
 from flask import jsonify, render_template, request, redirect, url_for, current_app
 from flask_login import login_required, current_user
 from app import db
+import app
 from app.main import bp
-from app.models import Prediction, Category, User, StockPick, StockUpdate, PredictionVote
+from app.models import Prediction, Category, User, StockPick, StockUpdate, PredictionVote, UserAchievement
 from app.utils.stocks import search_stock_ticker, get_stock_info
 
 from sqlalchemy import func
@@ -46,9 +47,37 @@ def prediction_overview():
     for p in predictions:
         sorted_predictions[p.category.name].append(p)
     current_app.logger.info(sorted_predictions)
+    feature_flag = app.feature_flag
 
-    return render_template('make_predictions.html', title='2026 Predictions', predictions=sorted_predictions, stockpicks=stockpicks, progress=counts_dict, name=current_user.user_name)
+    return render_template('make_predictions.html', title='2026 Predictions', predictions=sorted_predictions, stockpicks=stockpicks, progress=counts_dict, name=current_user.user_name, feature_flag=feature_flag)
 
+@bp.route('/profile/<name>', methods=['GET'])
+@login_required
+def profile(name):
+    user = User.query.filter_by(user_name=name).first_or_404()
+    stockpicks = StockPick.query.filter_by(user_id=current_user.id).all()
+    achievements = UserAchievement.query.filter_by(user_id=current_user.id).all()
+    sorted_predictions = {}
+    total_points = 0 
+    total_likelihood = 0 
+    count = 0
+
+    for category in Category:
+        sorted_predictions[category.name] = Prediction.query.filter_by(
+            user_id=user.id, 
+            category=category.name
+        ).order_by(Prediction.uuid_key).all()
+        for x in sorted_predictions[category.name]:
+            if x.points:
+                total_points += x.points
+            if x.likelihood:
+                total_likelihood += x.likelihood
+                count += 1
+    print(sorted_predictions)
+    if count > 0:
+        total_likelihood = float(total_likelihood/count)
+
+    return render_template('profile.html', user=user, predictions=sorted_predictions, stockpicks=stockpicks, achievements=achievements, total_points=total_points, total_likelihood=total_likelihood)
 
 @bp.route('/api/stocks/search', methods=['POST'])
 def search_stocks():
@@ -217,25 +246,6 @@ def fetch_stockpicks():
         'data': data
     }), 200
 
-@bp.route('/clear_all_votes', methods=['GET'])
-@login_required
-def clear_all_votes():
-    """clear all votes"""
-    try:
-        # This deletes all rows in the 'prediction_vote' table
-        db.session.query(PredictionVote).delete()
-        db.session.commit()
-        print("All votes cleared successfully.")
-    except Exception as e:
-        db.session.rollback()
-        print(f"Error clearing votes: {e}")
-
-    return jsonify({
-        'message': 'Bulk delete successfull',
-        'id': None,
-        'data': None,
-    }), 200
-
 @bp.route('/api/stockpicks/<int:stock_id>', methods=['PUT', 'PATCH'])
 def update_stockpicks(stock_id):
     """Update an existing prediction"""
@@ -269,4 +279,36 @@ def delete_stockpick(stock_id):
         'message': 'Stock successfully deleted',
         'id': pick.id,
         'data': pick.to_dict()
+    }), 200
+
+@bp.route('/clear_all_votes', methods=['GET'])
+@login_required
+def clear_all_votes():
+    """clear all votes"""
+    try:
+        # This deletes all rows in the 'prediction_vote' table
+        db.session.query(PredictionVote).delete()
+        db.session.commit()
+        print("All votes cleared successfully.")
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error clearing votes: {e}")
+
+    return jsonify({
+        'message': 'Bulk delete successfull',
+        'id': None,
+        'data': None,
+    }), 200
+
+
+@bp.route('/toggle_flag', methods=['GET'])
+@login_required
+def toggle_flag():
+    """toggle feature flag"""
+    app.feature_flag = not app.feature_flag
+
+    return jsonify({
+        'message': 'Feature flag succesfully toggled',
+        'id': None,
+        'data': app.feature_flag,
     }), 200

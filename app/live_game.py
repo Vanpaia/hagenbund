@@ -1,5 +1,5 @@
 from app import db
-from app.models import PredictionVote
+from app.models import Prediction, PredictionVote
 import time
 from collections import defaultdict
 
@@ -84,17 +84,38 @@ class GameState:
 
     def end_game(self, socketio):
         self.is_active = False
-        results = defaultdict(dict)
-        for round, data in self.submissions.items():
+        player_results = defaultdict(dict)
+        prediction_results = defaultdict(dict)
+
+        # First double loop to get total scores and participated rounds
+        for round_num, data in self.submissions.items():
+            if not prediction_results[round_num]:
+                prediction_results[round_num] = {"points": 0, "likelihood": 0, "speed": 0, "votes": 0, "average_likelihood": 0, "average_speed": 0}
             for player, result in data["votes"].items():
-                if not results[player]:
-                    results[player] = {"total": {"number": 0, "rounds": 0}}
-                results[player]["total"]["number"] += int(result["vote"])
-                results[player]["total"]["rounds"] += 1
-        for player in results.values():
-            print(player["total"]["number"] / player["total"]["rounds"])
+                prediction_results[round_num]["votes"] += 1
+                prediction_results[round_num]["likelihood"] += int(result["vote"])
+                prediction_results[round_num]["speed"] += int(result["speed"])
+                if not player_results[player]:
+                    player_results[player] = {"total_score": 0, "total_rounds": 0, "average_score": 0, "weighted_score": 0}
+                player_results[player]["total_score"] += int(result["vote"])
+                player_results[player]["total_rounds"] += 1
+        
+        # Calculating weighted score per player
+        for player, stats in player_results.items():
+            stats["average_score"] = stats["total_score"] / stats["total_rounds"]
+            stats["weighted_score"] = 10000 * stats["total_rounds"] / stats["total_score"]
+
+        # Second double loop to score using weighted system 
+        for round_num, data in self.submissions.items():
+            prediction_results[round_num]["average_likelihood"] = prediction_results[round_num]["likelihood"] / prediction_results[round_num]["votes"]
+            prediction_results[round_num]["average_speed"] = prediction_results[round_num]["speed"] / prediction_results[round_num]["votes"]
+            for player, result in data["votes"].items():
+                point_contribution = round(int(result["vote"]) * player_results[player]["weighted_score"])
+                prediction_results[round_num]["points"] += point_contribution
+        print(prediction_results)
         socketio.emit('end_game')
         self.finalize_game_to_db()
+        self.bulk_update_predictions(prediction_results)
 
     def get_remaining_ms(self, round_num=None):
         if round_num is None:
@@ -149,9 +170,9 @@ class GameState:
 
     def finalize_game_to_db(self):
         vote_entries = []
-        for round in self.submissions.values():
-            prediction_id = int(round["id"])
-            for player, result in round["votes"].items():
+        for round_num in self.submissions.values():
+            prediction_id = int(round_num["id"])
+            for player, result in round_num["votes"].items():
                 user_id = int(player)
                 vote = int(result["vote"])
                 speed = float(result["speed"])
@@ -165,6 +186,32 @@ class GameState:
         # Bulk save votes
         db.session.bulk_insert_mappings(PredictionVote, vote_entries)
         db.session.commit()
+
+    def bulk_update_predictions(self, prediction_results):
+        update_data = []
+        
+        for pred_id, stats in prediction_results.items():
+            # Ensure points is an integer if your DB column requires it
+            final_points = round(stats["points"])
+            
+            # likelihood is the "average_likelihood" we calculated earlier
+            avg_likelihood = stats["likelihood"] / stats["votes"] if stats["votes"] > 0 else 0
+            
+            update_data.append({
+                "id": pred_id,
+                "points": final_points,
+                "likelihood": avg_likelihood
+            })
+
+        try:
+            # This generates a single efficient SQL statement (e.g., using a CASE statement or temp table)
+            db.session.bulk_update_mappings(Prediction, update_data)
+            db.session.commit()
+            print(f"Successfully updated {len(update_data)} predictions.")
+        except Exception as e:
+            db.session.rollback()
+            print(f"Bulk update failed: {e}")
+            raise e
 
 
 def background_timer_task(socketio, state):

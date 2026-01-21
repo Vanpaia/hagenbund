@@ -61,9 +61,11 @@
                       <input class="input" id="new_description" type="text" placeholder="(Optional) Qualification or description" />
                     </div>
                     <div class="column">
+                      {% if feature_flag == false %}
                       <div class="control">
                         <button class="button is-primary" onclick="addPrediction(event)">Add</button>
                       </div>
+                      {% endif %}
                     </div>
                   </div>
                   {% for prediction in predictions.POL %}
@@ -76,9 +78,11 @@
                           <p>{{ prediction.description }}</p>
                         </div>
                         <div class="column">
+                          {% if feature_flag == false %}
                           <div class="control">
                             <button class="button is-danger" onclick="removePrediction(event)">Remove</button>
                           </div>
+                          {% endif %}
                         </div>
                       </div>
                     </div>
@@ -120,9 +124,11 @@
                       <input class="input" id="new_description" type="text" placeholder="(Optional) Qualification or description" />
                     </div>
                     <div class="column">
+                      {% if feature_flag == false %}
                       <div class="control">
                         <button class="button is-primary" onclick="addPrediction(event)">Add</button>
                       </div>
+                      {% endif %}
                     </div>
                   </div>
                   {% for prediction in predictions.EUR %}
@@ -135,9 +141,11 @@
                           <p>{{ prediction.description }}</p>
                         </div>
                         <div class="column">
+                          {% if feature_flag == false %}
                           <div class="control">
                             <button class="button is-danger" onclick="removePrediction(event)">Remove</button>
                           </div>
+                          {% endif %}
                         </div>
                       </div>
                     </div>
@@ -178,9 +186,11 @@
                       <input class="input" id="new_description" type="text" placeholder="(Optional) Qualification or description" />
                     </div>
                     <div class="column">
+                      {% if feature_flag == false %}
                       <div class="control">
                         <button class="button is-primary" onclick="addPrediction(event)">Add</button>
                       </div>
+                      {% endif %}
                     </div>
                   </div>
                   {% for prediction in predictions.ENT %}
@@ -193,9 +203,11 @@
                           <p>{{ prediction.description }}</p>
                         </div>
                         <div class="column">
+                          {% if feature_flag == false %}
                           <div class="control">
                             <button class="button is-danger" onclick="removePrediction(event)">Remove</button>
                           </div>
+                          {% endif %}
                         </div>
                       </div>
                     </div>
@@ -236,9 +248,11 @@
                       <input class="input" id="new_description" type="text" placeholder="(Optional) Qualification or description" />
                     </div>
                     <div class="column">
+                      {% if feature_flag == false %}
                       <div class="control">
                         <button class="button is-primary" onclick="addPrediction(event)">Add</button>
                       </div>
+                      {% endif %}
                     </div>
                   </div>
                   {% for prediction in predictions.SCI %}
@@ -251,9 +265,11 @@
                           <p>{{ prediction.description }}</p>
                         </div>
                         <div class="column">
+                          {% if feature_flag == false %}
                           <div class="control">
                             <button class="button is-danger" onclick="removePrediction(event)">Remove</button>
                           </div>
+                          {% endif %}
                         </div>
                       </div>
                     </div>
@@ -294,9 +310,11 @@
                       <input class="input" id="new_description" type="text" placeholder="(Optional) Qualification or description" />
                     </div>
                     <div class="column">
+                      {% if feature_flag == false %}
                       <div class="control">
                         <button class="button is-primary" onclick="addPrediction(event)">Add</button>
                       </div>
+                      {% endif %}
                     </div>
                   </div>
                   {% for prediction in predictions.ECO %}
@@ -309,9 +327,11 @@
                           <p>{{ prediction.description }}</p>
                         </div>
                         <div class="column">
+                          {% if feature_flag == false %}
                           <div class="control">
                             <button class="button is-danger" onclick="removePrediction(event)">Remove</button>
                           </div>
+                          {% endif %}
                         </div>
                       </div>
                     </div>
@@ -323,6 +343,7 @@
                            
         </div>
       </div>
+      {% if feature_flag %}
       <div class="fixed-grid has-1-cols">
         <div class="grid">
           <div class="cell" data-category="INV" data-count="{{ stockpicks|length }}" style="--count: '{{ stockpicks|length }}';"> 
@@ -391,6 +412,7 @@
           </div>
         </div>
       </div>
+      {% endif %}
     </section>
 
       <section class="section">
