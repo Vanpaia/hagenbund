@@ -39,7 +39,9 @@ def prediction_overview():
     ).filter(Prediction.user_id.in_(user_ids))\
      .group_by(Prediction.user_id)\
      .all()
-    counts_dict = {str(user_id): str(count) for user_id, count in results}
+    counts_dict = {str(uid): 0 for uid in user_ids}
+    for user_id, count in results:
+        counts_dict = {str(user_id): str(count) for user_id, count in results}
 
     current_app.logger.info(current_user.id)
 
