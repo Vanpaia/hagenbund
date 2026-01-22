@@ -165,13 +165,20 @@ def update_project(prediction_id):
 def delete_project(prediction_id):
     """Delete a prediction"""
     prediction = Prediction.query.get_or_404(prediction_id)
+    
+    # 1. Capture the data while the object is still "alive" and attached
+    prediction_data = prediction.to_dict()
+    prediction_id_val = prediction.id
+    
+    # 2. Perform the deletion
     db.session.delete(prediction)
     db.session.commit()
     
+    # 3. Return the captured data
     return jsonify({
         'message': 'Prediction successfully deleted',
-        'id': prediction.id,
-        'data': prediction.to_dict()
+        'id': prediction_id_val,
+        'data': prediction_data
     }), 200
 
 @bp.route('/api/stockpicks', methods=['POST'])
@@ -301,6 +308,20 @@ def clear_all_votes():
         'id': None,
         'data': None,
     }), 200
+
+@bp.route('/clear_all_achievements', methods=['GET'])
+@login_required
+def clear_all_achievements():
+    try:
+        # 1. Clear the Model-based table
+        db.session.query(UserAchievement).delete()
+        
+        db.session.commit()
+        return jsonify({'message': 'All achievement records cleared'}), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
 
 
 @bp.route('/toggle_flag', methods=['GET'])

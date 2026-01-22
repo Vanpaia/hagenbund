@@ -159,11 +159,11 @@ function addStockCard(e, ticker, name, exchange) {
 
 async function addStock(e) {
 	const metadata = e.target.closest('.cell');
-	let count = parseInt(metadata.dataset.count, 10);
+	let count = parseInt(metadata.dataset.count, 5);
 	const symbol = e.target.closest('.card').id;
 
-	if (count >= 10) {
-		showNotification('No more than 10 stockpicks allowed!', 'is-info');
+	if (count >= 5) {
+		showNotification('No more than 5 stockpicks allowed!', 'is-info');
 		return;
 	}
 

@@ -54,12 +54,6 @@ class UserAchievement(db.Model):
     user = db.relationship("User", back_populates="achievements")
     achievement = db.relationship("Achievement", back_populates="users")
 
-user_achievements = db.Table('user_achievements', db.Model.metadata,
-    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),  
-    db.Column('achievement_id', db.Integer, db.ForeignKey('achievement.id'), primary_key=True),
-    db.Column('created_at', db.Date, default= lambda: datetime.now(timezone.utc))
-)
-
 class Prediction(db.Model):
     __tablename__ = "prediction"
     id = db.Column(db.Integer, primary_key=True)
@@ -72,6 +66,8 @@ class Prediction(db.Model):
 
     points = db.Column(db.Integer, nullable=True)
     likelihood = db.Column(db.Float, nullable=True)
+
+    author = db.relationship("User", backref="predictions")
     
     def to_dict(self):
         formatted_date = self.created_at.isoformat() if self.created_at else None
@@ -81,6 +77,7 @@ class Prediction(db.Model):
                    "description": self.description,
                    "category": self.category.value,
                    "user_id": self.user_id,
+                   "author": self.author.user_name,
                    "created_at": formatted_date}
         return content
 

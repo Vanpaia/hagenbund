@@ -1,5 +1,6 @@
 from app import db
 from app.models import Prediction, PredictionVote
+from app.achievements import add_achievement_to_session
 import time
 from collections import defaultdict
 
@@ -86,24 +87,102 @@ class GameState:
         self.is_active = False
         player_results = defaultdict(dict)
         prediction_results = defaultdict(dict)
+        game_results = {"highest_round": 0, "quickest_round": 0, "highest_score": [], "highest_speed": [], "lowest_score":[], "lowest_speed": [],  "quickest_player": []}
 
         # First double loop to get total scores and participated rounds
         for round_num, data in self.submissions.items():
             if not prediction_results[round_num]:
-                prediction_results[round_num] = {"points": 0, "likelihood": 0, "speed": 0, "votes": 0, "average_likelihood": 0, "average_speed": 0}
+                prediction_results[round_num] = {"id": data["id"], "points": 0, "likelihood": 0, "speed": 0, "votes": 0, "average_likelihood": 0, "average_speed": 0}
             for player, result in data["votes"].items():
                 prediction_results[round_num]["votes"] += 1
                 prediction_results[round_num]["likelihood"] += int(result["vote"])
                 prediction_results[round_num]["speed"] += int(result["speed"])
                 if not player_results[player]:
-                    player_results[player] = {"total_score": 0, "total_rounds": 0, "average_score": 0, "weighted_score": 0}
+                    player_results[player] = {"name": result["name"], "total_score": 0, "total_rounds": 0, "average_score": 0, "weighted_score": 0, "votes": [], "speeds": [], "max_speed": 0, "avg_speed": 0}
                 player_results[player]["total_score"] += int(result["vote"])
+                player_results[player]["votes"].append(int(result["vote"]))
+                player_results[player]["speeds"].append(int(result["speed"]))
                 player_results[player]["total_rounds"] += 1
+                game_results["quickest_player"] = update_best_stats(
+                    game_results["quickest_player"], 
+                    result["name"], 
+                    int(result["speed"]), 
+                    find_max=False
+                    )
+
+
+        # Calculating high scores
+        for stats in prediction_results.values():
+            if game_results["quickest_round"] == 0: 
+                game_results["quickest_round"] = stats["average_speed"]
+            elif game_results["quickest_round"] > stats["average_speed"]: 
+                game_results["quickest_round"] = stats["average_speed"]
+            if game_results["highest_round"] == 0: 
+                game_results["highest_round"] = stats["average_likelihood"]
+            elif game_results["highest_round"] > stats["average_likelihood"]: 
+                game_results["highest_round"] = stats["average_likelihood"]
         
+
         # Calculating weighted score per player
         for player, stats in player_results.items():
             stats["average_score"] = stats["total_score"] / stats["total_rounds"]
+            stats["max_speed"] = min(stats["speeds"])
+            stats["avg_speed"] = sum(stats["speeds"]) / stats["total_rounds"]
+            stats["average_score"] = stats["total_score"] / stats["total_rounds"]
             stats["weighted_score"] = 10000 * stats["total_rounds"] / stats["total_score"]
+            min_max = max(stats["votes"])
+            game_results["highest_score"] = update_best_stats(
+                game_results["highest_score"], 
+                stats["name"], 
+                min_max,
+                find_max=True
+                )
+            min_max = min(stats["votes"])
+            game_results["lowest_score"] = update_best_stats(
+                game_results["lowest_score"], 
+                stats["name"], 
+                min_max,
+                find_max=False
+                )
+            min_max = max(stats["speeds"])
+            game_results["highest_speed"] = update_best_stats(
+                game_results["highest_speed"], 
+                stats["name"], 
+                min_max,
+                find_max=True
+                )
+            min_max = min(stats["speeds"])
+            game_results["lowest_speed"] = update_best_stats(
+                game_results["lowest_speed"], 
+                stats["name"], 
+                min_max,
+                find_max=False
+                )
+            achievements_to_notify = []
+
+            try:
+                # Map of achievement IDs to the game_results keys
+                mapping = {3: "highest_score", 4: "lowest_score", 1: "highest_speed", 2: "lowest_speed"}
+
+                for acid, key in mapping.items():
+                    for record in game_results[key]:
+                        result = add_achievement_to_session(acid, record["name"])
+                        if result:
+                            achievements_to_notify.append(result)
+
+                # ONE single commit for everything
+                db.session.commit()
+
+                # Emit sockets ONLY after we are sure the DB saved successfully
+                for user_id, title, desc in achievements_to_notify:
+                    socketio.emit('achievement_unlocked', {
+                        'title': title,
+                        'description': desc
+                    }, room=f"user_{user_id}")
+
+            except Exception as e:
+                db.session.rollback()
+                print(f"Batch achievement failed: {e}")
 
         # Second double loop to score using weighted system 
         for round_num, data in self.submissions.items():
@@ -112,8 +191,8 @@ class GameState:
             for player, result in data["votes"].items():
                 point_contribution = round(int(result["vote"]) * player_results[player]["weighted_score"])
                 prediction_results[round_num]["points"] += point_contribution
-        print(prediction_results)
-        socketio.emit('end_game')
+        print("PREDICTION", prediction_results)
+        socketio.emit('end_game', {"game_stats": game_results, "round_stats": prediction_results, "player_stats": player_results})
         self.finalize_game_to_db()
         self.bulk_update_predictions(prediction_results)
 
@@ -192,13 +271,14 @@ class GameState:
         
         for pred_id, stats in prediction_results.items():
             # Ensure points is an integer if your DB column requires it
+            actual_db_id = stats.get("id")
             final_points = round(stats["points"])
             
             # likelihood is the "average_likelihood" we calculated earlier
             avg_likelihood = stats["likelihood"] / stats["votes"] if stats["votes"] > 0 else 0
             
             update_data.append({
-                "id": pred_id,
+                "id": actual_db_id,
                 "points": final_points,
                 "likelihood": avg_likelihood
             })
@@ -221,5 +301,33 @@ def background_timer_task(socketio, state):
         if remaining <= 0:
             state.end_round(socketio)
 
+def update_best_stats(stats_list, name, value, find_max=False):
+    """
+    Updates a list of records. 
+    If value is better, replaces the list. 
+    If value is equal, appends to the list.
+    
+    :param stats_list: The list to update (e.g., game_results["quickest_player"])
+    :param name: Player name or ID
+    :param value: The numeric score/speed to compare
+    :param find_max: Set to True for "Highest", False for "Lowest/Quickest"
+    """
+    if not stats_list:
+        return [{"name": name, "value": value}]
+
+    best_value = stats_list[0]["value"]
+
+    # Check if the new value is "Better"
+    is_better = value > best_value if find_max else value < best_value
+    is_equal = value == best_value
+
+    if is_better:
+        # New record breaker! Replace the whole list
+        return [{"name": name, "value": value}]
+    elif is_equal:
+        # It's a tie! Add to the existing list
+        stats_list.append({"name": name, "value": value})
+        
+    return stats_list
 
 game_instance = GameState()
