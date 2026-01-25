@@ -10,7 +10,7 @@ class GameState:
         self.round_clocks = {}
         self.is_paused = True
         self.is_active = False 
-        self.players = set()
+        self.players = {}
         self.total_players = len(self.players)
         self.questions = []
         self.current_round = 1 
@@ -42,7 +42,7 @@ class GameState:
         self.is_paused = True
         self.is_active = False
         self.round_clocks = {}
-        self.players = set()
+        self.players = {}
         self.total_players = len(self.players)
         self.current_round = 1
         self.total_rounds = len(self.questions)
