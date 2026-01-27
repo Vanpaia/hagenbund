@@ -1,6 +1,6 @@
 from app import db
 from app.models import Prediction, PredictionVote
-from app.achievements import add_achievement_to_session
+from app.achievements import add_achievement_to_session, mark_achievement_notified, set_achievement
 import time
 from collections import defaultdict
 
@@ -160,25 +160,14 @@ class GameState:
                 )
             achievements_to_notify = []
 
+
             try:
                 # Map of achievement IDs to the game_results keys
                 mapping = {3: "highest_score", 4: "lowest_score", 1: "highest_speed", 2: "lowest_speed"}
 
                 for acid, key in mapping.items():
                     for record in game_results[key]:
-                        result = add_achievement_to_session(acid, record["name"])
-                        if result:
-                            achievements_to_notify.append(result)
-
-                # ONE single commit for everything
-                db.session.commit()
-
-                # Emit sockets ONLY after we are sure the DB saved successfully
-                for user_id, title, desc in achievements_to_notify:
-                    socketio.emit('achievement_unlocked', {
-                        'title': title,
-                        'description': desc
-                    }, room=f"user_{user_id}")
+                        set_achievement(acid, record["name"], socketio)
 
             except Exception as e:
                 db.session.rollback()

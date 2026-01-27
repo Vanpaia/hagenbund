@@ -40,7 +40,9 @@ def game_connect():
     if current_user.is_authenticated:
         print('Client connected to game: ', current_user.user_name)
         join_room('game_room')
-        game_instance.players.add((current_user.id, current_user.user_name))
+        user_info = (current_user.id, current_user.user_name)
+        if user_info not in game_instance.players:
+            game_instance.players.add(user_info)
         emit('player_update', list(game_instance.players), to='game_room')
         emit('player_info', {"id": current_user.id, "name": current_user.user_name})
         if game_instance.is_active:
