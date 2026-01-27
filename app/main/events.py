@@ -24,8 +24,10 @@ def disconnect():
     online_users.remove_user(current_user.user_name)
     emit('user_list', online_users.get_all_users(), broadcast=True)
     if current_user.id in game_instance.players:
-        game_instance.players.remove((current_user.id, current_user.user_name))
-        emit('player_update', list(game_instance.players), to='game_room')
+        game_instance.players["sid"].discard(request.sid)
+        if not game_instance.players["sid"]:
+            del game_instance.player[current_user.id]
+            emit('player_update', [{"name": player.name, "id": player.id} for player in game_instance.players], to='game_room')
 
 # Chatroom 
 
@@ -40,10 +42,11 @@ def game_connect():
     if current_user.is_authenticated:
         print('Client connected to game: ', current_user.user_name)
         join_room('game_room')
-        user_info = (current_user.id, current_user.user_name)
-        if user_info not in game_instance.players:
-            game_instance.players.add(user_info)
-        emit('player_update', list(game_instance.players), to='game_room')
+        if not current_user.id in game_instance.players:
+            game_instance.players[current_user.id] = {"id": current_user.id, "name":current_user.user_name, "sid":{request.sid}}
+        else:
+            game_instance.players[current_user.id]["sid"].add(request.sid)
+        emit('player_update', [{"name": player.name, "id": player.id} for player in game_instance.players], to='game_room')
         emit('player_info', {"id": current_user.id, "name": current_user.user_name})
         if game_instance.is_active:
             status = game_instance.get_game_status()
@@ -60,7 +63,7 @@ def handle_submission(submission):
     game_instance.submissions[submission["round"]]["votes"][current_user.id] = {"vote": int(submission["vote"]), "speed": game_instance.round_length - remaining, "name": submission["name"]}
     print(game_instance.submissions)
     target_votes = max(game_instance.total_players - 1, 1)
-    if len(game_instance.submissions[submission["round"]]) >= target_votes:
+    if len(game_instance.submissions[submission["round"]]["votes"]) >= target_votes:
         if not game_instance.is_processing_round:
             if submission["round"] == game_instance.current_round:
                 game_instance.is_processing_round = True

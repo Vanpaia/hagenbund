@@ -11,12 +11,12 @@ socket.on("player_update", function(data) {
   console.log(data);
   const player_list = document.getElementById("player-list");
   player_list.innerHTML = "";
-
-  for (let i = 0; i < data.length; i++) {
-    let item = document.createElement("li");
-    item.textContent = data[i][1];
+  Object.values(data).forEach(player => {
+   let item = document.createElement("li");
+    item.textContent = player["name"];
+    item.id = `player-${player["id"]}`;
     player_list.appendChild(item);
-  }
+  });
 });
 
 socket.on("player_info", function(user) {
