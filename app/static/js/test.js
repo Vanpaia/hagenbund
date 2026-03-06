@@ -288,7 +288,9 @@ function toggleActive() {
     var playerAmountInput = document.getElementById("playerAmountInput");
     var lengthInput = roundLengthInput.value;
     var playerAmount = playerAmountInput.value;
-    var game_config = { data: { length: lengthInput, player: playerAmount } };
+    var game_config = {
+      data: { length: lengthInput, player: playerAmount, test: true },
+    };
     console.log(game_config);
     socket.emit("start_game", game_config);
   } else {

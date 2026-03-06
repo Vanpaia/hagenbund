@@ -26,6 +26,11 @@ def chatroom():
 def live_game():
     return render_template('live.html', title='Gentleboys Live Game', user=current_user)
 
+@bp.route('/test', methods=['GET'])
+@login_required
+def test_game():
+    return render_template('test.html', title='Gentleboys Live Game', user=current_user)
+
 @bp.route('/2026-predictions', methods=['GET'])
 @login_required
 def prediction_overview():

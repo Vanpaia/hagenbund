@@ -4,7 +4,7 @@ from app.live_game import game_instance
 from app.live_game import background_timer_task
 from flask_login import current_user
 from app.registry import online_users
-from app.models import Prediction, Category
+from app.models import Prediction, Category, User
 
 
 @socketio.on('connect')
@@ -84,9 +84,22 @@ def previous_round():
 @socketio.on('start_game')
 def handle_start(game_config):
     predictions = []
-    for category in Category:
-        predictions.extend(Prediction.query.filter_by(
-            category=category.name
+    if game_config.get("test", False):
+        for category in Category:
+            predictions.extend(
+                Prediction.query
+                .join(User)
+                .filter(
+                    User.user_name == "Test", 
+                    Prediction.category == category
+                )
+                .order_by(Prediction.uuid_key)
+                .all()
+            )
+    else:
+        for category in Category:
+            predictions.extend(Prediction.query.filter_by(
+                category=category.name
         ).order_by(Prediction.uuid_key).all())
     questions = [prediction.to_dict() for prediction in predictions]
     kwargs = {"questions": questions}
