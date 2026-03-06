@@ -87,7 +87,7 @@ class GameState:
         self.is_active = False
         player_results = defaultdict(dict)
         prediction_results = defaultdict(dict)
-        game_results = {"highest_round": 0, "quickest_round": 0, "highest_score": [], "highest_speed": [], "lowest_score":[], "lowest_speed": [],  "quickest_player": []}
+        game_results = {"highest_round": {"question": None, "value":None}, "quickest_round": {"id": None, "value":None}, "highest_score": [], "highest_speed": [], "lowest_score":[], "lowest_speed": [],  "quickest_player": []}
 
         # First double loop to get total scores and participated rounds
         for round_num, data in self.submissions.items():
@@ -112,15 +112,21 @@ class GameState:
 
 
         # Calculating high scores
-        for stats in prediction_results.values():
-            if game_results["quickest_round"] == 0: 
-                game_results["quickest_round"] = stats["average_speed"]
-            elif game_results["quickest_round"] > stats["average_speed"]: 
-                game_results["quickest_round"] = stats["average_speed"]
-            if game_results["highest_round"] == 0: 
-                game_results["highest_round"] = stats["average_likelihood"]
-            elif game_results["highest_round"] > stats["average_likelihood"]: 
-                game_results["highest_round"] = stats["average_likelihood"]
+        for round_num, stats in prediction_results.items():
+            stats["average_speed"] = stats["speed"] / stats["votes"]
+            stats["average_likelihood"] = stats["likelihood"] / stats["votes"]
+            if game_results["quickest_round"]["value"] == None: 
+                game_results["quickest_round"]["value"] = stats["average_speed"]
+                game_results["quickest_round"]["question"] = {"author": self.questions[round_num]["author"], "title": self.questions[round_num]["title"]}
+            elif game_results["quickest_round"]["value"] > stats["average_speed"]: 
+                game_results["quickest_round"]["value"] = stats["average_speed"]
+                game_results["quickest_round"]["question"] = {"author": self.questions[round_num]["author"], "title": self.questions[round_num]["title"]}
+            if game_results["highest_round"]["value"] == None: 
+                game_results["highest_round"]["value"]  = stats["average_likelihood"]
+                game_results["highest_round"]["question"] = {"author": self.questions[round_num]["author"], "title": self.questions[round_num]["title"]}
+            elif game_results["highest_round"]["value"] < stats["average_likelihood"]: 
+                game_results["highest_round"]["value"]  = stats["average_likelihood"]
+                game_results["highest_round"]["question"] = {"author": self.questions[round_num]["author"], "title": self.questions[round_num]["title"]}
         
 
         # Calculating weighted score per player
@@ -130,48 +136,43 @@ class GameState:
             stats["avg_speed"] = sum(stats["speeds"]) / stats["total_rounds"]
             stats["average_score"] = stats["total_score"] / stats["total_rounds"]
             stats["weighted_score"] = 10000 * stats["total_rounds"] / stats["total_score"]
-            min_max = max(stats["votes"])
             game_results["highest_score"] = update_best_stats(
                 game_results["highest_score"], 
                 stats["name"], 
-                min_max,
+                stats["average_score"],
                 find_max=True
                 )
-            min_max = min(stats["votes"])
             game_results["lowest_score"] = update_best_stats(
                 game_results["lowest_score"], 
                 stats["name"], 
-                min_max,
+                stats["average_score"],
                 find_max=False
                 )
-            min_max = max(stats["speeds"])
             game_results["highest_speed"] = update_best_stats(
                 game_results["highest_speed"], 
                 stats["name"], 
-                min_max,
+                stats["avg_speed"],
                 find_max=True
                 )
-            min_max = min(stats["speeds"])
             game_results["lowest_speed"] = update_best_stats(
                 game_results["lowest_speed"], 
                 stats["name"], 
-                min_max,
+                stats["avg_speed"],
                 find_max=False
                 )
-            achievements_to_notify = []
 
 
-            try:
-                # Map of achievement IDs to the game_results keys
-                mapping = {3: "highest_score", 4: "lowest_score", 1: "highest_speed", 2: "lowest_speed"}
+        try:
+            # Map of achievement IDs to the game_results keys
+            mapping = {3: "highest_score", 4: "lowest_score", 1: "highest_speed", 2: "lowest_speed"}
 
-                for acid, key in mapping.items():
-                    for record in game_results[key]:
-                        set_achievement(acid, record["name"], socketio)
+            for acid, key in mapping.items():
+                for record in game_results[key]:
+                    set_achievement(acid, record["name"], socketio)
 
-            except Exception as e:
-                db.session.rollback()
-                print(f"Batch achievement failed: {e}")
+        except Exception as e:
+            db.session.rollback()
+            print(f"Batch achievement failed: {e}")
 
         # Second double loop to score using weighted system 
         for round_num, data in self.submissions.items():
@@ -181,6 +182,9 @@ class GameState:
                 point_contribution = round(int(result["vote"]) * player_results[player]["weighted_score"])
                 prediction_results[round_num]["points"] += point_contribution
         print("PREDICTION", prediction_results)
+        print(game_results)
+        print(prediction_results)
+        print(player_results)
         socketio.emit('end_game', {"game_stats": game_results, "round_stats": prediction_results, "player_stats": player_results})
         self.finalize_game_to_db()
         self.bulk_update_predictions(prediction_results)

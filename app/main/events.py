@@ -1,4 +1,5 @@
 from flask_socketio import emit, join_room, leave_room
+from flask import request
 from .. import socketio
 from app.live_game import game_instance
 from app.live_game import background_timer_task
@@ -23,11 +24,12 @@ def disconnect():
     print('Client disconnected: ', current_user.user_name)
     online_users.remove_user(current_user.user_name)
     emit('user_list', online_users.get_all_users(), broadcast=True)
-    if current_user.id in game_instance.players:
-        game_instance.players["sid"].discard(request.sid)
-        if not game_instance.players["sid"]:
-            del game_instance.player[current_user.id]
-            emit('player_update', [{"name": player.name, "id": player.id} for player in game_instance.players], to='game_room')
+    if current_user.id in game_instance.players.keys():
+        game_instance.players[current_user.id]["sid"].discard(request.sid)
+        if not game_instance.players[current_user.id]["sid"]:
+            del game_instance.players[current_user.id]
+            game_instance.total_players -= 1
+            emit('player_update', [{"name": player["name"], "id": player["id"]} for player in game_instance.players.values()], to='game_room')
 
 # Chatroom 
 
@@ -44,10 +46,12 @@ def game_connect():
         join_room('game_room')
         if not current_user.id in game_instance.players:
             game_instance.players[current_user.id] = {"id": current_user.id, "name":current_user.user_name, "sid":{request.sid}}
+            game_instance.total_players += 1
         else:
             game_instance.players[current_user.id]["sid"].add(request.sid)
-        emit('player_update', [{"name": player.name, "id": player.id} for player in game_instance.players], to='game_room')
-        emit('player_info', {"id": current_user.id, "name": current_user.user_name})
+        print(game_instance.players)
+        emit('player_update', [{"name": player["name"], "id": player["id"]} for player in game_instance.players.values()], to='game_room')
+        emit('player_info', {"id": current_user.id, "name": current_user.user_name}, to=f"user_{current_user.id}")
         if game_instance.is_active:
             status = game_instance.get_game_status()
             emit('game_status_update', status, broadcast=True, to='game_room')
@@ -55,14 +59,18 @@ def game_connect():
 @socketio.on('submit_prediction_vote')
 def handle_submission(submission):
     if game_instance.total_players > 1:
-        if current_user.id == submission["id"]:
+        round = game_instance.questions[game_instance.current_round-1] if len(game_instance.questions) > 0 else {}
+        if round["user_id"] == submission["user_id"]:
             return
     if not game_instance.submissions[submission["round"]]:
         game_instance.submissions[submission["round"]] = {"id": submission["id"], "votes": {}}
     remaining = game_instance.get_remaining_ms(round_num=submission["round"])
-    game_instance.submissions[submission["round"]]["votes"][current_user.id] = {"vote": int(submission["vote"]), "speed": game_instance.round_length - remaining, "name": submission["name"]}
-    print(game_instance.submissions)
+    game_instance.submissions[submission["round"]]["votes"][submission["user_id"]] = {"vote": int(submission["vote"]), "speed": game_instance.round_length - remaining, "name": submission["name"]}
     target_votes = max(game_instance.total_players - 1, 1)
+    print(submission)
+    print("Target: ", target_votes)
+    print("Current: ", len(game_instance.submissions[submission["round"]]["votes"]))
+    print(game_instance.submissions[submission["round"]]["votes"])
     if len(game_instance.submissions[submission["round"]]["votes"]) >= target_votes:
         if not game_instance.is_processing_round:
             if submission["round"] == game_instance.current_round:

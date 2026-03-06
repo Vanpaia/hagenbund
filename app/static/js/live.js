@@ -7,7 +7,7 @@ var user_name;
 
 socket.emit("game_connect");
 
-socket.on("player_update", function (data) {
+socket.on("player_update", function(data) {
   console.log(data);
   const player_list = document.getElementById("player-list");
   player_list.innerHTML = "";
@@ -19,20 +19,20 @@ socket.on("player_update", function (data) {
   });
 });
 
-socket.on("player_info", function (user) {
+socket.on("player_info", function(user) {
   console.log(user);
   user_id = user.id;
   user_name = user.name;
 });
 
-socket.on("timer_status_update", function (data) {
+socket.on("timer_status_update", function(data) {
   pause = data.is_paused;
   updateTimerUI(data.remaining_ms);
   console.log("Time received:", data.remaining_ms);
   console.log("Paused:", data.is_paused);
 });
 
-socket.on("end_round", function (data) {
+socket.on("end_round", function(data) {
   socket.emit("submit_prediction_vote", {
     vote: slider.value,
     id: data.id,
@@ -41,7 +41,7 @@ socket.on("end_round", function (data) {
   });
 });
 
-socket.on("end_game", function (gameStats) {
+socket.on("end_game", function(gameStats) {
   var gameCard = document.getElementById("game-card");
   gameOverState = `
               <h2 class="subtitle is-spaced">
@@ -54,10 +54,10 @@ socket.on("end_game", function (gameStats) {
                   </h2>
                   <ul>
                     <li>
-                      Highest scoring round: ${gameStats.game_stats.highest_round}
+                      Highest scoring round: ${gameStats.game_stats.highest_round.question.title} <i>- ${gameStats.game_stats.highest_round.question.author}</i> 
                     </li>
                     <li>
-                      Quickest round: ${gameStats.game_stats.quickest_round}
+                      Quickest round: ${gameStats.game_stats.quickest_round.question.title} <i>- ${gameStats.game_stats.quickest_round.question.author}</i> 
                     </li>
                     <li>
                       Highest average score: ${gameStats.game_stats.highest_score.map((p) => p.name).join(", ")} 
@@ -117,7 +117,7 @@ socket.on("end_game", function (gameStats) {
   console.log(gameStats);
 });
 
-socket.on("clear_game", function () {
+socket.on("clear_game", function() {
   var gameCard = document.getElementById("game-card");
   gameOverState = `
               <div class="is-widget-icon">
@@ -135,7 +135,7 @@ socket.on("clear_game", function () {
   gameCard.innerHTML = gameOverState;
 });
 
-socket.on("game_status_update", function (data) {
+socket.on("game_status_update", function(data) {
   pause = data.is_paused;
   start = data.is_active;
   updateTimerUI(data.remaining_ms);
@@ -162,13 +162,15 @@ slider.addEventListener("input", () => {
 });
 
 function submitVote() {
-  console.log(slider.value);
-  socket.emit("submit_prediction_vote", {
+  voteObject = {
     vote: slider.value,
     id: current_round["data"]["id"],
     name: user_name,
+    user_id: user_id,
     round: current_round["round"],
-  });
+  };
+  console.log(voteObject);
+  socket.emit("submit_prediction_vote", voteObject);
   slider.value = 50;
   output.textContent = slider.value;
 }

@@ -9,6 +9,14 @@ def set_achievement(achievement_id, user_name, socketio):
             return
 
         user = User.query.filter_by(user_name=user_name).first()
+        exists = UserAchievement.query.filter_by(
+            user_id=user_id, 
+            achievement_id=achievement_id
+        ).first()
+
+        if exists:
+            return
+
         new_award = UserAchievement(user_id=user.id, achievement_id=achievement.id)
         db.session.add(new_award)
         db.session.commit()
@@ -19,7 +27,9 @@ def set_achievement(achievement_id, user_name, socketio):
             'id': new_award.id,
             'earned_at': new_award.created_at.isoformat(),
         }, room=f"user_{user.id}")
+
     except:
+        db.session.rollback()
         return
 
 def mark_achievement_notified(award_id):
