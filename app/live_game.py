@@ -113,21 +113,25 @@ class GameState:
 
         # Calculating high scores
         for round_num, stats in prediction_results.items():
-            stats["average_speed"] = stats["speed"] / stats["votes"]
-            stats["average_likelihood"] = stats["likelihood"] / stats["votes"]
-            if game_results["quickest_round"]["value"] == None: 
-                game_results["quickest_round"]["value"] = stats["average_speed"]
-                game_results["quickest_round"]["question"] = {"author": self.questions[round_num]["author"], "title": self.questions[round_num]["title"]}
-            elif game_results["quickest_round"]["value"] > stats["average_speed"]: 
-                game_results["quickest_round"]["value"] = stats["average_speed"]
-                game_results["quickest_round"]["question"] = {"author": self.questions[round_num]["author"], "title": self.questions[round_num]["title"]}
-            if game_results["highest_round"]["value"] == None: 
-                game_results["highest_round"]["value"]  = stats["average_likelihood"]
-                game_results["highest_round"]["question"] = {"author": self.questions[round_num]["author"], "title": self.questions[round_num]["title"]}
-            elif game_results["highest_round"]["value"] < stats["average_likelihood"]: 
-                game_results["highest_round"]["value"]  = stats["average_likelihood"]
-                game_results["highest_round"]["question"] = {"author": self.questions[round_num]["author"], "title": self.questions[round_num]["title"]}
-        
+            index = round_num - 1
+            if 0 <= index < len(self.questions):
+                stats["average_speed"] = stats["speed"] / stats["votes"]
+                stats["average_likelihood"] = stats["likelihood"] / stats["votes"]
+                if game_results["quickest_round"]["value"] == None: 
+                    game_results["quickest_round"]["value"] = stats["average_speed"]
+                    game_results["quickest_round"]["question"] = {"author": self.questions[index]["author"], "title": self.questions[index]["title"]}
+                elif game_results["quickest_round"]["value"] > stats["average_speed"]: 
+                    game_results["quickest_round"]["value"] = stats["average_speed"]
+                    game_results["quickest_round"]["question"] = {"author": self.questions[index]["author"], "title": self.questions[index]["title"]}
+                if game_results["highest_round"]["value"] == None: 
+                    game_results["highest_round"]["value"]  = stats["average_likelihood"]
+                    game_results["highest_round"]["question"] = {"author": self.questions[index]["author"], "title": self.questions[index]["title"]}
+                elif game_results["highest_round"]["value"] < stats["average_likelihood"]: 
+                    game_results["highest_round"]["value"]  = stats["average_likelihood"]
+                    game_results["highest_round"]["question"] = {"author": self.questions[index]["author"], "title": self.questions[index]["title"]}
+            else:
+                print(f"Error: Round {round_num} has no corresponding question (Index {index} is out of bounds)")
+            
 
         # Calculating weighted score per player
         for player, stats in player_results.items():

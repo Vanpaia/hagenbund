@@ -10,7 +10,7 @@ def set_achievement(achievement_id, user_name, socketio):
 
         user = User.query.filter_by(user_name=user_name).first()
         exists = UserAchievement.query.filter_by(
-            user_id=user_id, 
+            user_id=user.id, 
             achievement_id=achievement_id
         ).first()
 
@@ -20,15 +20,18 @@ def set_achievement(achievement_id, user_name, socketio):
         new_award = UserAchievement(user_id=user.id, achievement_id=achievement.id)
         db.session.add(new_award)
         db.session.commit()
+        print("New ID: ", new_award.id)
 
         socketio.emit('achievement_unlocked', {
             'title': achievement.title,
             'description': achievement.description, 
+            'image': achievement.logo, 
             'id': new_award.id,
-            'earned_at': new_award.created_at.isoformat(),
+            'earned_at': new_award.earned_at.isoformat(),
         }, room=f"user_{user.id}")
 
-    except:
+    except Exception as e:
+        print("Achievement Fail: ", e)
         db.session.rollback()
         return
 
