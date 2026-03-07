@@ -24,4 +24,6 @@ with app.app_context():
     db.session.add(mag_7)
     db.session.add(fn)
     db.session.add(late)
+    db.session.add(high_round)
+    db.session.add(fast_round)
     db.session.commit()
