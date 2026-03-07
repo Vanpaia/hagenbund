@@ -32,7 +32,6 @@ function showNotification(message, type = "is-info", imageUrl = null) {
     img.style.width = "128px";
     img.style.height = "128px";
     img.style.marginRight = "15px";
-    img.style.borderRadius = "5px"; // Optional: makes it look nicer
     flexWrapper.appendChild(img);
   }
 

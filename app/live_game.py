@@ -3,6 +3,8 @@ from app.models import Prediction, PredictionVote
 from app.achievements import add_achievement_to_session, mark_achievement_notified, set_achievement
 import time
 from collections import defaultdict
+import pickle
+from datetime import datetime
 
 class GameState:
     def __init__(self, round_length = 30000):
@@ -25,6 +27,13 @@ class GameState:
             self.total_players = player_amount
         self.questions = questions
         self.total_rounds = len(questions)
+
+    def save_game(self):
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        filename = f"saved_games/game_data_{self.current_round}_{timestamp}.pkl"
+
+        with open(filename, 'wb') as f:
+            pickle.dump(self.submissions, f)
 
     def start_round(self, socketio):
         self.is_paused = False
@@ -85,6 +94,7 @@ class GameState:
 
     def end_game(self, socketio):
         self.is_active = False
+        self.save_game()
         player_results = defaultdict(dict)
         prediction_results = defaultdict(dict)
         game_results = {"highest_round": {"question": None, "value":None}, "quickest_round": {"id": None, "value":None}, "highest_score": [], "highest_speed": [], "lowest_score":[], "lowest_speed": [],  "quickest_player": []}
@@ -173,6 +183,9 @@ class GameState:
             for acid, key in mapping.items():
                 for record in game_results[key]:
                     set_achievement(acid, record["name"], socketio)
+
+            set_achievement(9, game_results["highest_round"]["question"]["author"], socketio)
+            set_achievement(10, game_results["quickest_round"]["question"]["author"], socketio)
 
         except Exception as e:
             db.session.rollback()

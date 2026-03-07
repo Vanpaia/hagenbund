@@ -2,9 +2,11 @@ from flask import jsonify, render_template, request, redirect, url_for, current_
 from flask_login import login_required, current_user
 from app import db
 import app
+from .. import socketio
 from app.main import bp
 from app.models import Prediction, Category, User, StockPick, StockUpdate, PredictionVote, UserAchievement
 from app.utils.stocks import search_stock_ticker, get_stock_info
+from app.achievements import set_achievement
 
 from sqlalchemy import func
 from collections import defaultdict
@@ -118,6 +120,9 @@ def create_prediction():
     db.session.add(prediction)
     db.session.commit()
 
+
+    set_achievement(8, current_user.user_name, socketio)
+
     return jsonify({
         'message': 'Prediction successfully created',
         'id': prediction.id,
@@ -198,11 +203,14 @@ def create_stockpick():
             return jsonify({'error': f'Missing required field: {field}'}), 400
     
     stock_info = get_stock_info(data["symbol"])
+
+    user_id = data.get("user_id", current_user.id)
+    user = User.query.filter_by(id = user_id).first_or_404()
     
     if not stock_info:
         return jsonify({'error': f'Error fetching info for: {data["symbol"]}'}), 400
     pick = StockPick(
-        user_id=data.get("user_id", current_user.id),
+        user_id=user.id,
         symbol=data["symbol"],
         name=stock_info[0]["companyName"],
         currency=stock_info[0]["currency"],
@@ -233,6 +241,15 @@ def create_stockpick():
     )
     db.session.add(update)
     db.session.commit()
+
+    # Set achievements if necessary
+    mag_7 = ['Alphabet Inc.', 'Microsoft Corporation', 'Apple Inc.', 'Amazon.com, Inc.', 'Meta Platforms, Inc.', 'NVIDIA Corporation', 'Tesla, Inc.']
+    if pick.industry == "Aerospace & Defense":
+        set_achievement(5, user.user_name, socketio)
+    elif pick.name == 'FiscalNote Holdings, Inc.':
+        set_achievement(7, user.user_name, socketio)
+    elif pick.name in mag_7:
+        set_achievement(6, user.user_name, socketio)
 
     return jsonify({
         'message': 'Stock successfully added',

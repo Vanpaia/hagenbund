@@ -25,13 +25,13 @@ print(data)
 # FMB
 API_KEY = "HbV6HuiymhhFdxedKavfR23SVTW9ifO1"
 header = {"apikey":API_KEY}
-keyword = "Rheinmetall"
+keyword = "FiscalNote"
 search_url = f'https://financialmodelingprep.com/stable/search-name?query={keyword}'
 r = requests.get(search_url, headers=header)
 data = r.json()
 
 print(data)
-
+"""
 symbol = data[0]["symbol"]
 info_url = f'https://financialmodelingprep.com/stable/profile?symbol={symbol}'
 r = requests.get(info_url, headers=header)
@@ -39,3 +39,4 @@ r = requests.get(info_url, headers=header)
 data = r.json()
 
 print(data)
+"""

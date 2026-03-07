@@ -131,7 +131,7 @@ def handle_stop():
 
 @socketio.on('save_game')
 def handle_save():
-        game_instance.end_game(socketio)
+    game_instance.save_game()
 
 @socketio.on('toggle_pause')
 def handle_toggle():
