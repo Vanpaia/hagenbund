@@ -20,6 +20,42 @@
             </div>
           </div>
         </div>
+
+        {% if achievements %}
+        <div class="container has-text-centered">
+          <div class="grid">
+            {% for ua in achievements %}
+            <div class="cell">
+              <div class="card has-background-warning-light" style="border: 2px solid #ffe08a; border-radius: 2px;">
+                <div class="card-content has-text-centered">
+                  <div class="is-widget-icon mb-4">
+                    <figure class="image is-64x64 is-inline-block">
+			{% if ua.achievement %}
+				<img src="{{ url_for('static', filename=ua.achievement.logo) }}">
+			{% else %}
+				<p>Achievement data missing for ID: {{ ua.achievement_id }}</p>
+			{% endif %}
+                    </figure>
+                  </div>
+                  <div class="is-widget-label">
+                    <p class="title is-5 has-text-warning-dark mb-2">
+                      {{ ua.achievement.title }}
+                    </p>
+                    <p class="subtitle is-6 has-text-grey-dark">
+                      {{ ua.achievement.description }}
+                    </p>
+                  </div>
+                  <hr class="dropdown-divider">
+                  <p class="is-size-7 has-text-weight-semibold">
+                    Earned: {{ ua.earned_at.strftime('%Y-%m-%d') }}
+                  </p>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
       </div>
     </section>
     <section class="section is-main-section">

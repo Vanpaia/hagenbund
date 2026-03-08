@@ -1,12 +1,12 @@
 from app import create_app, db
 from config import Config
 
-from app.models import Prediction, User, Achievement
+from app.models import Prediction, User, Achievement, StockPick, StockUpdate
 
 app = create_app(config_class=Config)
+ids = [158, 78]
 
 with app.app_context():
-    user = User.query.all()
-    for x in user:
-        predictions = Prediction.query.filter_by(user_id = x.id).all()
-        print(x.user_name, len(predictions))
+    preds = Prediction.query.filter(Prediction.id.in_(ids)).all()
+    for x in preds:
+        print(x.id, x.title, x.author)

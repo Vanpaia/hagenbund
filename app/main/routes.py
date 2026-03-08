@@ -64,8 +64,8 @@ def prediction_overview():
 @login_required
 def profile(name):
     user = User.query.filter_by(user_name=name).first_or_404()
-    stockpicks = StockPick.query.filter_by(user_id=current_user.id).all()
-    achievements = UserAchievement.query.filter_by(user_id=current_user.id).all()
+    stockpicks = StockPick.query.filter_by(user_id=user.id).all()
+    achievements = UserAchievement.query.filter_by(user_id=user.id).all()
     sorted_predictions = {}
     total_points = 0 
     total_likelihood = 0 
