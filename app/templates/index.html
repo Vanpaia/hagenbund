@@ -37,8 +37,8 @@
                 </div>
                 <div class="is-widget-label">
                   <h2 class="subtitle is-spaced">Prediction Leaderboard</h2>
-                  {% for gentleboy in gentleboys %}
-                    <div id="{{ gentleboy.id }}" class="card">
+                  {% for gentleboy in predictions %}
+                    <div id="prediction-{{ gentleboy.id }}" class="card">
                       <div class="columns">
                         <div class="column is-two-fifths">
                           <p>{{ gentleboy.user_name }}</p>
@@ -67,15 +67,24 @@
 
                 <div class="is-widget-label">
                   <h2 class="subtitle is-spaced">Investment Leaderboard</h2>
-                  {% for gentleboy in gentleboys %}
-                    <div id="{{ gentleboy.id }}" class="card">
+                  {% for gentleboy in investments %}
+                    <div id="investment-{{ gentleboy.id }}" class="card">
                       <div class="columns">
                         <div class="column is-two-fifths">
                           <p>{{ gentleboy.user_name }}</p>
                         </div>
                         <div class="column is-two-fifths">
-                          <p>{{ gentleboy.total_investment }}</p>
+                          <p>€ {{ gentleboy.total_investment }}</p>
                         </div>
+			{% if gentleboy.total_investment < 5000 %}
+                        <div class="column is-one-fifths" style="color: red;">
+                          <p>{{ (((gentleboy.total_investment / 5000) -1 ) * 100) | round(2) }}%</p>
+                        </div>
+			{% else %}
+                        <div class="column is-one-fifths" style="color: green;">
+                          <p>{{ (((gentleboy.total_investment / 5000) -1 ) * 100) | round(2) }}%</p>
+                        </div>
+			{% endif %}
                       </div>
                     </div>
                   {% endfor %}

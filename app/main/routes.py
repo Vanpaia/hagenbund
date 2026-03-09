@@ -17,8 +17,10 @@ from collections import defaultdict
 @login_required
 def index():
     users = User.query.all()
+    investments= sorted(users, key=lambda g: g.total_investment, reverse=True)
+    predictions= sorted(users, key=lambda g: g.total_prediction_points, reverse=True)
 
-    return render_template('index.html', title='Gentleboys Clubhouse', user=current_user, gentleboys=users)
+    return render_template('index.html', title='Gentleboys Clubhouse', user=current_user, investments=investments, predictions=predictions)
 
 @bp.route('/chat', methods=['GET'])
 @login_required

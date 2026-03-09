@@ -226,8 +226,17 @@
                 <p>{{ stock.industry }}</p>
               </div>
               <div class="column">
-                <p>$ {{ stock.current_price }}</p>
+                <p>€ {{ (stock.current_price/stock.initial_price * 1000) | round(2) }}</p>
               </div>
+		{% if (stock.current_price/stock.initial_price*1000) < 1000 %}
+		<div class="column" style="color: red;">
+			<p>{{ (((stock.current_price / stock.initial_price) - 1) * 100) | round(2) }}%</p>
+		</div>
+		{% else %}
+		<div class="column" style="color: green;">
+			<p>{{ (((stock.current_price / stock.initial_price) - 1) * 100) | round(2) }}%</p>
+		</div>
+		{% endif %}
             </div>
           </div>
         {% endfor %}
