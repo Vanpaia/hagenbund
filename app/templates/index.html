@@ -3,78 +3,83 @@
 {% block content %}
   <!-- Main Content -->
   <div class="main-content">
-    <section class="hero is-medium is-hero-bar">
+    <section class="hero is-hero-bar">
       <div class="hero-body">
         <div class="container has-text-centered">
-          <p class="title">
-            Starter Template
-          </p>
-          <p class="sub-title">
-            A modern responsive front-end framework based on Bulma
-          </p>
+          <div class="grid">
+            <div class="cell">
+            </div>
+            <div class="cell">
+              <div class="block">
+                <h1 class="title">
+                  Hey {{ name }}, how are your 2026 predictions going?
+                </h1>
+              </div>
+            </div>
+            <div class="cell">
+            </div>
+          </div>
         </div>
-      </div>
-      <div class="hero-foot">
-        <div class="container has-text-centered">
-          <a class="button is-medium is-primary" href="#">GET STARTED</a>
-        </div
       </div>
     </section>
     <section class="section is-main-section">
-      <div class="tile is-ancestor">
-        <div class="tile is-parent">
-          <div class="card tile is-child">
-            <div class="card-content has-text-centered">
-              <div class="is-widget-icon">
-                <span class="icon has-text-primary is-large">
-                  <i class="mdi mdi-flash mdi-48px"></i>
-                </span>
-              </div>
-              <div class="is-widget-label">
-                <h2 class="subtitle is-spaced">
-                  Speeds up development
-                </h2>
-                <p class="has-text-justified">
-                  We did most of the heavy lifting for you to provide a default stylings that incorporate our custom components. Additionally, we refined animations and transitions to provide a smoother experience for developers.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="tile is-parent">
-          <div class="card tile is-child">
-            <div class="card-content has-text-centered">
-              <div class="is-widget-icon">
-                <span class="icon has-text-primary is-large">
-                  <i class="mdi mdi-account-multiple mdi-48px"></i>
-                </span>
-              </div>
-              <div class="is-widget-label">
-                <h2 class="subtitle is-spaced has-text-centered">
-                  User Experience Focused
-                </h2>
-                <p>
-                  By utilizing elements and principles of Material Design, we were able to create a framework that incorporates components and animations that provide more feedback to users. Additionally, a single underlying responsive system across all platforms allow for a more unified user experience.
-                </p>
+      <div class="fixed-grid has-1-cols">
+        <div class="grid">
+          <div class="cell">
+            <div class="card">
+              <div class="card-content has-text-centered">
+                <div class="is-widget-icon">
+                  <span class="icon has-text-primary is-large">
+                    <span class="material-symbols-outlined" style="font-size: 48px;">
+                      globe
+                    </span>
+                  </span>
+                </div>
+                <div class="is-widget-label">
+                  <h2 class="subtitle is-spaced">Prediction Leaderboard</h2>
+                  {% for gentleboy in gentleboys %}
+                    <div id="{{ gentleboy.id }}" class="card">
+                      <div class="columns">
+                        <div class="column is-two-fifths">
+                          <p>{{ gentleboy.user_name }}</p>
+                        </div>
+                        <div class="column is-two-fifths">
+                          <p>{{ gentleboy.total_achieved_points }} / {{ gentleboy.total_prediction_points }}</p>
+                        </div>
+                      </div>
+                    </div>
+                  {% endfor %}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-        <div class="tile is-parent">
-          <div class="card tile is-child">
-            <div class="card-content has-text-centered">
-              <div class="is-widget-icon">
-                <span class="icon has-text-primary is-large">
-                  <i class="mdi mdi-settings mdi-48px"></i>
-                </span>
-              </div>
-              <div class="is-widget-label">
-                <h2 class="subtitle is-spaced">
-                  Easy to work with
-                </h2>
-                <p>
-                  We have provided detailed documentation as well as specific code examples to help new users get started. We are also always open to feedback and can answer any questions a user may have about Materialize.
-                </p>
+
+          <div class="cell">
+            <div class="card">
+              <div class="card-content has-text-centered">
+                <div class="is-widget-icon">
+                  <span class="icon has-text-primary is-large">
+                    <span class="material-symbols-outlined" style="font-size: 48px;">
+                      trending_down
+                    </span>
+                  </span>
+                </div>
+
+                <div class="is-widget-label">
+                  <h2 class="subtitle is-spaced">Investment Leaderboard</h2>
+                  {% for gentleboy in gentleboys %}
+                    <div id="{{ gentleboy.id }}" class="card">
+                      <div class="columns">
+                        <div class="column is-two-fifths">
+                          <p>{{ gentleboy.user_name }}</p>
+                        </div>
+                        <div class="column is-two-fifths">
+                          <p>{{ gentleboy.total_investment }}</p>
+                        </div>
+                      </div>
+                    </div>
+                  {% endfor %}
+                </div>
               </div>
             </div>
           </div>
@@ -82,4 +87,9 @@
       </div>
     </section>
   </div>
+{% endblock %}
+
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/index.js') }}"></script>
 {% endblock %}

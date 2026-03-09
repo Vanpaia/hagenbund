@@ -1,5 +1,8 @@
 from app import db, login
 from flask_login import UserMixin
+from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.sql.functions import coalesce
+from sqlalchemy import func, select
 from flask import jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timezone
@@ -13,6 +16,12 @@ class Category(Enum):
     SCI = "Science/Technology"
     ECO = "Economy/Business"
 
+class PredictionStatus(Enum):
+    PENDING = "pending"
+    VOTING = "voting"
+    SUCCESS = "success"
+    FAILED = "failed"
+
 
 class User(UserMixin, db.Model):
     __tablename__ = "user"
@@ -23,6 +32,51 @@ class User(UserMixin, db.Model):
     is_admin = db.Column(db.Boolean, default=False)
 
     achievements = db.relationship("UserAchievement", back_populates="user")
+    stockpicks = db.relationship("StockPick", back_populates="user")
+    predictions = db.relationship("Prediction", back_populates="author")
+
+    @hybrid_property
+    def total_investment(self) -> int:
+        return round(sum(1000/p.initial_price*p.current_price for p in self.stockpicks), 2)
+
+    @total_investment.inplace.expression
+    @classmethod
+    def _total_investment_expression(cls):
+        return (
+            select(func.sum((1000 / StockPick.initial_price) * StockPick.current_price))
+            .where(StockPick.user_id == cls.id)
+            .label("total_portfolio_value")
+        )
+
+    @hybrid_property
+    def total_prediction_points(self) -> int:
+        return sum(p.points or 0 for p in self.predictions)
+
+    @total_prediction_points.inplace.expression
+    @classmethod
+    def _total_prediction_points_expression(cls):
+        return (
+            select(func.sum(Prediction.points))
+            .where(Prediction.user_id == cls.id)
+            .label("total_points")
+        )
+
+    @hybrid_property
+    def total_achieved_points(self) -> int:
+        # Python logic
+        return sum(p.points or 0 for p in self.predictions if p.status == PredictionStatus.SUCCESS)
+
+    @total_achieved_points.inplace.expression
+    @classmethod
+    def _total_achieved_points_expression(cls):
+        # SQL logic
+        return (
+            select(coalesce(func.sum(Prediction.points), 0))
+            .where(Prediction.user_id == cls.id)
+            .where(Prediction.status == PredictionStatus.SUCCESS)
+            .correlate(cls) # Helps SQLAlchemy understand the relationship in subqueries
+            .label("total_achieved_points")
+        )
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -63,11 +117,12 @@ class Prediction(db.Model):
     description = db.Column(db.Text, nullable=True)
     category = db.Column(db.Enum(Category), nullable=False)
     created_at = db.Column(db.Date, default= lambda: datetime.now(timezone.utc))
+    status = db.Column(db.Enum(PredictionStatus), default=PredictionStatus.PENDING)
 
     points = db.Column(db.Integer, nullable=True)
     likelihood = db.Column(db.Float, nullable=True)
 
-    author = db.relationship("User", backref="predictions")
+    author = db.relationship("User", back_populates="predictions")
     
     def to_dict(self):
         formatted_date = self.created_at.isoformat() if self.created_at else None
@@ -113,6 +168,8 @@ class StockPick(db.Model):
     last_checked = db.Column(db.Date, default= lambda: datetime.now(timezone.utc))
     initial_price = db.Column(db.Float, nullable=False)
     current_price = db.Column(db.Float, nullable=False)
+
+    user = db.relationship("User", back_populates="stockpicks")
 
     __table_args__ = (
             db.UniqueConstraint('user_id', 'symbol', name='_user_symbol_uc'),
