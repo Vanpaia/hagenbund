@@ -16,49 +16,14 @@ from collections import defaultdict
 @bp.route('/index', methods=['GET'])
 @login_required
 def index():
-    return redirect(url_for('main.prediction_overview'))
+    users = User.query.all()
+
+    return render_template('index.html', title='Gentleboys Clubhouse', user=current_user, gentleboys=users)
 
 @bp.route('/chat', methods=['GET'])
 @login_required
 def chatroom():
     return render_template('chatroom.html', title='Gentleboys Chatroom', user=current_user)
-
-@bp.route('/live', methods=['GET'])
-@login_required
-def live_game():
-    return render_template('live.html', title='Gentleboys Live Game', user=current_user)
-
-@bp.route('/test', methods=['GET'])
-@login_required
-def test_game():
-    return render_template('test.html', title='Gentleboys Live Game', user=current_user)
-
-@bp.route('/2026-predictions', methods=['GET'])
-@login_required
-def prediction_overview():
-    predictions = Prediction.query.filter_by(user_id=current_user.id).all()
-    stockpicks = StockPick.query.filter_by(user_id=current_user.id).all()
-    user_ids = [2, 3, 4, 5, 6, 7]
-
-    results = db.session.query(
-        Prediction.user_id, 
-        func.count(Prediction.id)
-    ).filter(Prediction.user_id.in_(user_ids))\
-     .group_by(Prediction.user_id)\
-     .all()
-    counts_dict = {str(uid): 0 for uid in user_ids}
-    for user_id, count in results:
-        counts_dict = {str(user_id): str(count) for user_id, count in results}
-
-    current_app.logger.info(current_user.id)
-
-    sorted_predictions = defaultdict(list)
-    for p in predictions:
-        sorted_predictions[p.category.name].append(p)
-    current_app.logger.info(sorted_predictions)
-    feature_flag = app.feature_flag
-
-    return render_template('make_predictions.html', title='2026 Predictions', predictions=sorted_predictions, stockpicks=stockpicks, progress=counts_dict, name=current_user.user_name, feature_flag=feature_flag)
 
 @bp.route('/profile/<name>', methods=['GET'])
 @login_required
@@ -311,40 +276,6 @@ def delete_stockpick(stock_id):
         'id': pick.id,
         'data': pick.to_dict()
     }), 200
-
-@bp.route('/clear_all_votes', methods=['GET'])
-@login_required
-def clear_all_votes():
-    """clear all votes"""
-    try:
-        # This deletes all rows in the 'prediction_vote' table
-        db.session.query(PredictionVote).delete()
-        db.session.commit()
-        print("All votes cleared successfully.")
-    except Exception as e:
-        db.session.rollback()
-        print(f"Error clearing votes: {e}")
-
-    return jsonify({
-        'message': 'Bulk delete successfull',
-        'id': None,
-        'data': None,
-    }), 200
-
-@bp.route('/clear_all_achievements', methods=['GET'])
-@login_required
-def clear_all_achievements():
-    try:
-        # 1. Clear the Model-based table
-        db.session.query(UserAchievement).delete()
-        
-        db.session.commit()
-        return jsonify({'message': 'All achievement records cleared'}), 200
-        
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': str(e)}), 500
-
 
 @bp.route('/toggle_flag', methods=['GET'])
 @login_required
