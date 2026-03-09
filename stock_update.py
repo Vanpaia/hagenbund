@@ -27,7 +27,6 @@ if __name__ == "__main__":
                 stock.description=stock_info[0]["description"],
                 stock.website=stock_info[0]["website"],
                 stock.image=stock_info[0]["image"],
-                stock.initial_price=stock_info[0]["price"],
                 stock.current_price=stock_info[0]["price"]
 
                 update = StockUpdate(

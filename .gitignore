@@ -4,4 +4,6 @@ venv/
 
 logs/
 
+backups/
 devdatabase.db
+*.db
