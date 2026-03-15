@@ -94,10 +94,18 @@
           {% for i in range(5) %}
             <div class="cell">
               {% if predictions.POL[i] %}
-                <div class="box">
+                <div class="box{{ ' is-primary' if predictions.POL[i].status.value == 'success' }}">
                   <strong>{{ predictions.POL[i].title }}</strong><br>
                   {% if predictions.POL[i].points %}
                     <p>{{ predictions.POL[i].points }} / {{ "%.2f"|format(predictions.POL[i].likelihood) }} %</p>
+                  {% endif %}
+                  {% if predictions.POL[i].status.value == "pending" %}
+                  <button class="button is-small is-primary mt-2 open-conclusion-modal"
+                          data-prediction-id="{{ predictions.POL[i].id }}">
+                    Submit
+                  </button>
+                  {% else %}
+                  <p>{{ predictions.POL[i].status.value | capitalize }}</p>
                   {% endif %}
                 </div>
               {% else %}
@@ -119,16 +127,22 @@
           {% for i in range(5) %}
             <div class="cell">
               {% if predictions.EUR[i] %}
-                <div class="box has-background-light">
+                <div class="box">
                   <strong>{{ predictions.EUR[i].title }}</strong><br>
                   {% if predictions.EUR[i].points %}
                     <p>{{ predictions.EUR[i].points }} / {{ "%.2f"|format(predictions.EUR[i].likelihood) }} %</p>
                   {% endif %}
+                  {% if predictions.EUR[i].status.value == "pending" %}
+                  <button class="button is-small is-primary mt-2 open-conclusion-modal"
+                          data-prediction-id="{{ predictions.EUR[i].id }}">
+                    Submit
+                  </button>
+                  {% else %}
+                  <p>{{ predictions.EUR[i].status.value | capitalize }}</p>
+                  {% endif %}
                 </div>
               {% else %}
-                <div class="box has-background-light" style="visibility: hidden;">
-                  &nbsp;
-                </div>
+                <div class="box has-background-light" style="visibility: hidden;">&nbsp;</div>
               {% endif %}
             </div>
           {% endfor %}
@@ -148,6 +162,14 @@
                   <strong>{{ predictions.ENT[i].title }}</strong><br>
                   {% if predictions.ENT[i].points %}
                     <p>{{ predictions.ENT[i].points }} / {{ "%.2f"|format(predictions.ENT[i].likelihood) }} %</p>
+                  {% endif %}
+                  {% if predictions.ENT[i].status.value == "pending" %}
+                  <button class="button is-small is-primary mt-2 open-conclusion-modal"
+                          data-prediction-id="{{ predictions.ENT[i].id }}">
+                    Submit
+                  </button>
+                  {% else %}
+                  <p>{{ predictions.ENT[i].status.value | capitalize }}</p>
                   {% endif %}
                 </div>
               {% else %}
@@ -174,6 +196,14 @@
                   {% if predictions.SCI[i].points %}
                     <p>{{ predictions.SCI[i].points }} / {{ "%.2f"|format(predictions.SCI[i].likelihood) }} %</p>
                   {% endif %}
+                  {% if predictions.SCI[i].status.value == "pending" %}
+                  <button class="button is-small is-primary mt-2 open-conclusion-modal"
+                          data-prediction-id="{{ predictions.SCI[i].id }}">
+                    Submit
+                  </button>
+                  {% else %}
+                  <p>{{ predictions.SCI[i].status.value | capitalize }}</p>
+                  {% endif %}
                 </div>
               {% else %}
                 <div class="box has-background-light" style="visibility: hidden;">
@@ -198,6 +228,14 @@
                   <strong>{{ predictions.ECO[i].title }}</strong><br>
                   {% if predictions.ECO[i].points %}
                     <p>{{ predictions.ECO[i].points }} / {{ "%.2f"|format(predictions.ECO[i].likelihood) }} %</p>
+                  {% endif %}
+                  {% if predictions.ECO[i].status.value == "pending" %}
+                  <button class="button is-small is-primary mt-2 open-conclusion-modal"
+                          data-prediction-id="{{ predictions.ECO[i].id }}">
+                    Submit
+                  </button>
+                  {% else %}
+                  <p>{{ predictions.ECO[i].status.value | capitalize }}</p>
                   {% endif %}
                 </div>
               {% else %}
@@ -243,4 +281,56 @@
       </nav>
     </section>
   </div>
+
+  <!-- Modal -->
+  <div id="conclusionModal" class="modal">
+    <div class="modal-background"></div>
+    <div class="modal-card">
+      <header class="modal-card-head">
+        <p class="modal-card-title">Submit Conclusion</p>
+        <button class="delete" aria-label="close" id="closeModal"></button>
+      </header>
+      <section class="modal-card-body">
+        <input type="hidden" id="conclusionPredictionId">
+
+        <div class="field">
+          <label class="label">Outcome</label>
+          <div class="control">
+            <div class="select is-fullwidth">
+              <select id="conclusionOutcome">
+                <option value="SUCCESS">Succeeded</option>
+                <option value="FAILED">Failed</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label">Description</label>
+          <div class="control">
+            <textarea class="textarea" id="conclusionDescription" 
+                      placeholder="Describe why this prediction succeeded or failed..." 
+                      rows="3"></textarea>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label">Supporting URL <span class="has-text-grey is-size-7">(optional)</span></label>
+          <div class="control">
+            <input class="input" type="url" id="conclusionUrl" placeholder="https://...">
+          </div>
+        </div>
+
+      </section>
+      <footer class="modal-card-foot">
+        <button class="button is-primary" id="submitConclusion">Submit</button>
+        <button class="button" id="cancelModal">Cancel</button>
+      </footer>
+    </div>
+  </div>
+
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/profile.js') }}"></script>
 {% endblock %}

@@ -22,6 +22,18 @@
              </div>
               
              <div class = "navbar-end">
+
+               {% if current_user.is_authenticated %}
+               <div class = "navbar-item">
+                   <a href="{{ url_for('main.profile', name=current_user.user_name) }}">
+                    <span class="icon has-text-primary is-large">
+                      <span class="material-symbols-outlined" style="font-size: 36px;">
+                        account_circle
+                      </span>
+                    </span>
+                   </a>
+               </div>
+               {% endif %}
                <div class = "navbar-item">
                   <div class = "buttons">
                      {% if current_user.is_anonymous %}

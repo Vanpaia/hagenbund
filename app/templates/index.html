@@ -12,7 +12,7 @@
             <div class="cell">
               <div class="block">
                 <h1 class="title">
-                  Hey {{ name }}, how are your 2026 predictions going?
+                  Hey {{ user.user_name }}, how are your 2026 predictions going?
                 </h1>
               </div>
             </div>
@@ -25,6 +25,63 @@
     <section class="section is-main-section">
       <div class="fixed-grid has-1-cols">
         <div class="grid">
+          {% if votes %}
+          <div class="cell">
+            <div class="card">
+              <div class="card-content has-text-centered">
+                <div class="is-widget-icon">
+                  <span class="icon has-text-primary is-large">
+                    <span class="material-symbols-outlined" style="font-size: 48px;">
+                      how_to_vote
+                    </span>
+                  </span>
+                </div>
+                <div class="is-widget-label">
+                  <h2 class="subtitle is-spaced">Prediction Conclusions</h2>
+                  {% for vote in votes %}
+                    <div id="{{ vote.id }}" class="card">
+                      <div class="columns">
+                        <div class="column is-one-fifths">
+                          <p>Prediction {{ vote.outcome.value | capitalize }}: {{ vote.prediction.title }}</p>
+                          {% if vote.prediction.description %}
+                          <p> {{ vote.prediction.description }} <p>
+                          {% endif %}
+                        </div>
+                        <div class="column is-two-fifths">
+                          <p>{{ vote.description }}</p>
+                          {% if vote.url %}
+                          <a href={{vote.url}}>Link</a>
+                          {% endif %}
+                        </div>
+                        <div class="column is-one-fifths">
+                          <progress id="{{ vote.id }}-success" class="progress is-primary reading-tracher-fixed" value="{{ vote.total_in_favour }}" max="4"></progress>
+                          <progress id="{{ vote.id }}-failure" class="progress is-danger reading-tracher-fixed" value="{{ vote.total_against }}" max="4"></progress>
+                        </div>
+                        <div class="column is-one-fifths">
+                          {% set user_vote = vote.get_user_vote(current_user.id) %}
+                          
+                          <button class="button is-small mt-2 vote-btn {% if user_vote and user_vote.vote == False %}is-danger{% else %}is-light{% endif %}"
+                                  data-conclusion-id="{{ vote.id }}"
+                                  data-vote-id="{{ user_vote.id if user_vote else '' }}"
+                                  data-vote="false">
+                            Disagree
+                          </button>
+                          <button class="button is-small mt-2 vote-btn {% if user_vote and user_vote.vote == True %}is-primary{% else %}is-light{% endif %}"
+                                  data-conclusion-id="{{ vote.id }}"
+                                  data-vote-id="{{ user_vote.id if user_vote else '' }}"
+                                  data-vote="true">
+                            Agree
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+
           <div class="cell">
             <div class="card">
               <div class="card-content has-text-centered">
@@ -41,7 +98,7 @@
                     <div id="prediction-{{ gentleboy.id }}" class="card">
                       <div class="columns">
                         <div class="column is-two-fifths">
-                          <p>{{ gentleboy.user_name }}</p>
+                          <a href="{{ url_for('main.profile', name=gentleboy.user_name) }}">{{ gentleboy.user_name }}</a>
                         </div>
                         <div class="column is-two-fifths">
                           <p>{{ gentleboy.total_achieved_points }} / {{ gentleboy.total_prediction_points }}</p>
@@ -67,11 +124,23 @@
 
                 <div class="is-widget-label">
                   <h2 class="subtitle is-spaced">Investment Leaderboard</h2>
+                  <div id="best-investment" class="card">
+                    {% if best_stock.current_price >= best_stock.initial_price %}
+                    <p><b>Best performing:</b> {{best_stock.name}} <span style="color: green;">({{(((best_stock.current_price / best_stock.initial_price) -1) * 100) | round(2) }}%)</span></p>
+                    {% else %}
+                    <p><b>Best performing:</b>{{best_stock.name}} <span style="color: red;">({{(((best_stock.current_price / best_stock.initial_price) -1) * 100) | round(2) }}%)</span></p>
+                    {% endif %}
+                    {% if worst_stock.current_price >= worst_stock.initial_price %}
+                    <p><b>Worst performing:</b> {{worst_stock.name}} <span style="color: green;">({{(((worst_stock.current_price / worst_stock.initial_price) -1) * 100) | round(2) }}%)</span></p>
+                    {% else %}
+                    <p><b>Worst performing:</b> {{worst_stock.name}} <span style="color: red;">({{(((worst_stock.current_price / worst_stock.initial_price) -1) * 100) | round(2) }}%)</span></p>
+                    {% endif %}
+                  </div>
                   {% for gentleboy in investments %}
                     <div id="investment-{{ gentleboy.id }}" class="card">
                       <div class="columns">
                         <div class="column is-two-fifths">
-                          <p>{{ gentleboy.user_name }}</p>
+                          <a href="{{ url_for('main.profile', name=gentleboy.user_name) }}">{{ gentleboy.user_name }}</a>
                         </div>
                         <div class="column is-two-fifths">
                           <p>€ {{ gentleboy.total_investment }}</p>
