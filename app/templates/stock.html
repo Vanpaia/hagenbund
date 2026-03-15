@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <!-- Main Content -->
+  <div class="main-content">
+    <section class="hero is-hero-bar">
+      <div class="hero-body">
+        <div class="container has-text-centered">
+          <div class="grid">
+            <div class="cell">
+            </div>
+            <div class="cell">
+              <div class="block">
+                <img src="{{ stock.image }}" alt="{{stock.name}} image">
+                <h1 class="title">
+                  {{ stock.name }}
+                </h1>
+                <h1 class="subtitle">
+                  Investment by {{ stock.user.user_name}}: € {{ (stock.current_price/stock.initial_price * 1000) | round(2) }} 
+                  {% if (stock.current_price/stock.initial_price*1000) < 1000 %}
+                  <span style="color: red;"> ( {{ (((stock.current_price / stock.initial_price) - 1) * 100) | round(2) }}% )</span>
+                  {% else %}
+                  <span style="color: green;">( {{ (((stock.current_price / stock.initial_price) - 1) * 100) | round(2) }}% )</span>
+                  {% endif %}
+                </h1>
+              </div>
+            </div>
+            <div class="cell">
+              <div class="block">
+                {% if update.change_percentage < 0 %}
+                <p><b>Last Change:</b> <span style="color: red;">{{ update.change_percentage | round(2) }}%</span></p>
+                {% else %}
+                <p><b>Last Change:</b> <span style="color: green;">{{ update.change_percentage | round(2) }}%</span></p>
+                {% endif %}
+                <p><b>Beta:</b> {{ update.beta | round(2) }}</p>
+                <p><b>Trading Volume:</b> {{ update.volume }}</p>
+                <p><b>Average Volume:</b> {{ update.average_volume }}</p>
+              </div>
+              <div class="block">
+                <p><b>Last Checked:</b> {{ update.formatted_date }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="section is-main-section">
+      <nav id="current_stocks" class="panel is-primary">
+        <p class="panel-heading">Stock Info:</p>
+        <div class="panel-block is-block">
+          <div class="columns">
+            <div class="column">
+              <p><b>Stock:</b></p> 
+            </div>
+            <div class="column">
+              <p>{{ stock.name }} ({{ stock.symbol }})</p>
+            </div>
+          </div>
+        </div>
+        <div class="panel-block is-block">
+          <div class="columns">
+            <div class="column">
+              <p><b>Description:</b></p>
+            </div>
+            <div class="column">
+              <p>{{ stock.description }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="panel-block is-block">
+          <div class="columns">
+            <div class="column">
+              <p><b>Website:</b></p>
+            </div>
+            <div class="column">
+              <a href="{{stock.website}}">{{ stock.website }}</a>
+            </div>
+          </div>
+        </div>
+        <div class="panel-block is-block">
+          <div class="columns">
+            <div class="column">
+              <p><b>Country:</b></p>
+            </div>
+            <div class="column">
+              <p>{{ stock.country }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="panel-block is-block">
+          <div class="columns">
+            <div class="column">
+              <p><b>Sector / Industry:</b></p>
+            </div>
+            <div class="column">
+              <p>{{ stock.sector }} / {{ stock.industry }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="panel-block is-block">
+          <div class="columns">
+            <div class="column">
+              <p><b>Market Cap:</b></p>
+            </div>
+            <div class="column">
+              <p>{{ update.market_cap }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="panel-block is-block">
+          <div class="columns">
+            <div class="column">
+              <p><b>Current CEO</b></p>
+            </div>
+            <div class="column">
+              <p>{{ stock.ceo }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="panel-block is-block">
+          <div class="columns">
+            <div class="column">
+              <p><b>Employees:</b></p>
+            </div>
+            <div class="column">
+              <p>{{ stock.employees }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="panel-block is-block">
+          <div class="columns">
+            <div class="column">
+              <p><b>Exchange:</b></p>
+            </div>
+            <div class="column">
+              <p>{{ stock.exchange_full_name }} ({{ stock.exchange }})</p>
+            </div>
+          </div>
+        </div>
+        <div class="panel-block is-block">
+          <div class="columns">
+            <div class="column">
+              <p><b>Initial Price:</b></p>
+            </div>
+            <div class="column">
+              <p>{{ stock.currency }} {{ stock.initial_price | round(2) }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="panel-block is-block">
+          <div class="columns">
+            <div class="column">
+              <p><b>Current Price:</b></p>
+            </div>
+            <div class="column">
+              <p>{{ stock.currency }} {{ stock.current_price | round(2) }}</p>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </section>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/stock.js') }}"></script>
+{% endblock %}

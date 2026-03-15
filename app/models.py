@@ -272,7 +272,9 @@ class StockUpdate(db.Model):
     average_volume = db.Column(db.Integer, nullable=False)
     created_at = db.Column(db.DateTime, default= lambda: datetime.now(timezone.utc))
 
-
+    @property
+    def formatted_date(self):
+        return self.created_at.strftime('%a %d %b %Y, %I:%M%p')
 
 
 @login.user_loader
