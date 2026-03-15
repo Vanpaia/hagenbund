@@ -23,3 +23,4 @@ class Config(object):
 #    SQLALCHEMY_DATABASE_URI = f'mysql+pymysql://{user}:{password}@{host}:{port}/{dbname}' or 'sqlite:///' + os.path.join(basedir, 'devdatabase.db')
     SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'devdatabase.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    VOTE_LIMIT = int(config["DEFAULT"]["vote_limit"])

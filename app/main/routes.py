@@ -2,9 +2,10 @@ from flask import jsonify, render_template, request, redirect, url_for, current_
 from flask_login import login_required, current_user
 from app import db
 import app
+from config import Config
 from .. import socketio
 from app.main import bp
-from app.models import Prediction, Category, User, StockPick, StockUpdate, PredictionVote, UserAchievement
+from app.models import Prediction, Category, PredictionConclusion, PredictionConclusionVote, PredictionStatus, User, StockPick, StockUpdate, PredictionVote, UserAchievement, ConclusionOutcome, ConclusionStatus
 from app.utils.stocks import search_stock_ticker, get_stock_info
 from app.achievements import set_achievement
 
@@ -19,8 +20,9 @@ def index():
     users = User.query.all()
     investments= sorted(users, key=lambda g: g.total_investment, reverse=True)
     predictions= sorted(users, key=lambda g: g.total_prediction_points, reverse=True)
+    conclusions = PredictionConclusion.query.filter_by(status=ConclusionStatus.ACTIVE).all()
 
-    return render_template('index.html', title='Gentleboys Clubhouse', user=current_user, investments=investments, predictions=predictions)
+    return render_template('index.html', title='Gentleboys Clubhouse', user=current_user, investments=investments, predictions=predictions, votes=conclusions)
 
 @bp.route('/chat', methods=['GET'])
 @login_required
@@ -117,7 +119,7 @@ def fetch_predictions():
     }), 200
 
 @bp.route('/api/predictions/<int:prediction_id>', methods=['PUT', 'PATCH'])
-def update_project(prediction_id):
+def update_prediction(prediction_id):
     """Update an existing prediction"""
     prediction = Prediction.query.get_or_404(prediction_id)
     data = request.get_json()
@@ -139,7 +141,7 @@ def update_project(prediction_id):
     }), 200
 
 @bp.route('/api/predictions/<int:prediction_id>', methods=['DELETE'])
-def delete_project(prediction_id):
+def delete_prediction(prediction_id):
     """Delete a prediction"""
     prediction = Prediction.query.get_or_404(prediction_id)
     
@@ -157,6 +159,168 @@ def delete_project(prediction_id):
         'id': prediction_id_val,
         'data': prediction_data
     }), 200
+
+@bp.route('/api/conclusion', methods=['POST'])
+def create_conclusion():
+    """Create a new prediction conclusion"""
+    data = request.get_json()
+
+    # Validate required fields
+    required_fields = ['prediction_id', 'description', 'outcome']
+    for field in required_fields:
+        if field not in data:
+            return jsonify({'error': f'Missing required field: {field}'}), 400
+
+
+    existing = PredictionConclusion.query.filter_by(
+        prediction_id=data["prediction_id"], status=ConclusionStatus.ACTIVE
+    ).first()
+    if existing:
+        return jsonify({'error': 'An active conclusion already exists'}), 409
+
+    try:
+        outcome = ConclusionOutcome[data.get("outcome")]
+    except KeyError:
+        return jsonify({'error': 'Invalid outcome value'}), 400
+
+    conclusion = PredictionConclusion(prediction_id=data.get("prediction_id"), user_id=data.get("user_id", current_user.id), description=data.get("description"), url=data.get("url"), outcome=outcome)
+    db.session.add(conclusion)
+    conclusion.prediction.status = PredictionStatus.VOTING
+
+    db.session.commit()
+
+
+    return jsonify({
+        'message': 'Prediction conclusion successfully created',
+        'id': conclusion.id,
+        'data': conclusion.to_dict()
+    }), 201
+
+@bp.route('/api/conclusion', methods=['GET'])
+@login_required
+def fetch_conclusions():
+    """Fetch conclusions"""
+
+    #Pulling the data from the URL for further use
+    id = request.args.get('id', None)
+
+    if id:
+        conclusions = [PredictionConclusion.query.filter_by(id=id, status=ConclusionStatus.ACTIVE).first_or_404()]
+    else:
+        conclusions = PredictionConclusion.query.filter_by(status=ConclusionStatus.ACTIVE).all()
+
+    data = []
+    for x in conclusions:
+        data.append(x.to_dict())
+
+    return jsonify({
+        'message': 'Search successfull',
+        'id': None,
+        'data': data
+    }), 200
+
+@bp.route('/api/conclusion/<int:conclusion_id>', methods=['PATCH'])
+@login_required
+def update_conclusion(conclusion_id):
+    conclusion = PredictionConclusion.query.get_or_404(conclusion_id)
+    data = request.get_json()
+
+    if 'status' in data:
+        try:
+            new_status = ConclusionStatus[data['status']]
+        except KeyError:
+            return jsonify({'error': 'Invalid status value'}), 400
+        
+        # only the submitter can cancel
+        if new_status == ConclusionStatus.CANCELLED:
+            if conclusion.user_id != current_user.id:
+                return jsonify({'error': 'Unauthorized'}), 403
+            if conclusion.status != ConclusionStatus.ACTIVE:
+                return jsonify({'error': 'Can only cancel an active conclusion'}), 409
+
+            conclusion.status = new_status
+
+    db.session.commit()
+    return jsonify({'message': 'Conclusion updated', 'id': conclusion.id}), 200
+
+@bp.route('/api/conclusion/vote', methods=['POST'])
+def create_conclusion_vote():
+    """Create a new prediction conclusion vote"""
+    data = request.get_json()
+    user_id=data.get("user_id", current_user.id)
+
+    # Validate required fields
+    required_fields = ['prediction_conclusion_id', 'vote']
+    for field in required_fields:
+        if field not in data:
+            return jsonify({'error': f'Missing required field: {field}'}), 400
+
+
+    conclusion = PredictionConclusion.query.filter_by(
+        id=data["prediction_conclusion_id"]
+    ).first()
+ 
+    if not conclusion:
+        return jsonify({'error': 'No active conclusion for this vote exists'}), 400   
+
+    existing = PredictionConclusionVote.query.filter_by(
+        prediction_conclusion_id=data["prediction_conclusion_id"], user_id=user_id
+    ).first()
+
+    if existing:
+        return jsonify({'error': 'A vote for this conclusion already exists'}), 409
+
+    vote = PredictionConclusionVote(prediction_conclusion_id=conclusion.id, user_id=user_id, vote=data.get("vote"))
+    db.session.add(vote)
+    db.session.flush()
+    
+    if conclusion.total_in_favour >= Config.VOTE_LIMIT:
+        conclusion.status = ConclusionStatus.ACCEPTED
+    elif conclusion.total_against >= Config.VOTE_LIMIT:
+        conclusion.status = ConclusionStatus.REJECTED
+
+    db.session.commit()
+
+    return jsonify({
+        'message': 'Prediction conclusion vote successfully created',
+        'id': vote.id,
+        'data': {'vote': vote.vote, 'status': vote.conclusion.status.value}
+    }), 201
+
+@bp.route('/api/conclusion/vote/<int:vote_id>', methods=['PUT', 'PATCH'])
+@login_required
+def update_conclusion_vote(vote_id):
+    """Update an existing prediction conclusion vote"""
+    vote = PredictionConclusionVote.query.get_or_404(vote_id)
+    data = request.get_json()
+
+
+    if vote.user_id != current_user.id:
+        return jsonify({'error': 'Unauthorized'}), 403
+ 
+    conclusion = PredictionConclusion.query.filter_by(id=vote.prediction_conclusion_id).first()
+
+    # Update fields if provided
+    if 'vote' in data:
+        vote.vote= data['vote']
+
+    db.session.flush()
+
+    if conclusion.total_in_favour >= Config.VOTE_LIMIT:
+        conclusion.status = ConclusionStatus.ACCEPTED
+        conclusion.prediction.status = PredictionStatus(conclusion.outcome.value)
+    elif conclusion.total_against >= Config.VOTE_LIMIT:
+        conclusion.status = ConclusionStatus.REJECTED
+        conclusion.prediction.status = PredictionStatus.PENDING
+
+    db.session.commit()
+    
+    return jsonify({
+        'message': 'Prediction conclusion vote successfully updated',
+        'id': vote.id,
+        'data': {'vote': vote.vote, 'status': vote.conclusion.status.value}
+    }), 200
+
 
 @bp.route('/api/stockpicks', methods=['POST'])
 def create_stockpick():

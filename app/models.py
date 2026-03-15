@@ -22,6 +22,15 @@ class PredictionStatus(Enum):
     SUCCESS = "success"
     FAILED = "failed"
 
+class ConclusionOutcome(Enum):
+    SUCCESS = "success"
+    FAILED = "failed"
+
+class ConclusionStatus(Enum):
+    ACTIVE = "active"
+    ACCEPTED = "accepted"
+    REJECTED = "rejected"
+    CANCELLED = "cancelled"
 
 class User(UserMixin, db.Model):
     __tablename__ = "user"
@@ -123,6 +132,7 @@ class Prediction(db.Model):
     likelihood = db.Column(db.Float, nullable=True)
 
     author = db.relationship("User", back_populates="predictions")
+    conclusions = db.relationship("PredictionConclusion", back_populates="prediction")
     
     def to_dict(self):
         formatted_date = self.created_at.isoformat() if self.created_at else None
@@ -147,6 +157,58 @@ class PredictionVote(db.Model):
     __table_args__ = (
             db.UniqueConstraint('user_id', 'prediction_id', name='_user_prediction_uc'),
         )
+
+class PredictionConclusionVote(db.Model):
+    __tablename__ = "prediction_conclusion_vote"
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    prediction_conclusion_id = db.Column(db.Integer, db.ForeignKey("prediction_conclusion.id"), nullable=False)
+    vote = db.Column(db.Boolean, nullable=False)
+    created_at = db.Column(db.DateTime, default= lambda: datetime.now(timezone.utc))
+
+    conclusion = db.relationship("PredictionConclusion", back_populates="votes")
+
+    __table_args__ = (
+            db.UniqueConstraint('user_id', 'prediction_conclusion_id', name='_user_prediction_conclusion_uc'),
+        )
+
+class PredictionConclusion(db.Model):
+    __tablename__ = "prediction_conclusion"
+    id = db.Column(db.Integer, primary_key=True)
+    prediction_id = db.Column(db.Integer, db.ForeignKey("prediction.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    created_at = db.Column(db.DateTime, default= lambda: datetime.now(timezone.utc))
+    description = db.Column(db.Text, nullable=False)
+    url = db.Column(db.Text, nullable=True)
+    outcome = db.Column(db.Enum(ConclusionOutcome))
+    status = db.Column(db.Enum(ConclusionStatus), nullable=False, default=ConclusionStatus.ACTIVE)
+
+    votes = db.relationship("PredictionConclusionVote", back_populates="conclusion")
+    prediction = db.relationship("Prediction", back_populates="conclusions")
+
+    def to_dict(self):
+        formatted_date = self.created_at.isoformat() if self.created_at else None
+        content = {"id": self.id,
+                   "description": self.description,
+                   "url": self.url,
+                   "user_id": self.user_id,
+                   "outcome": self.outcome.value,
+                   "status": self.status.value,
+                   "created_at": formatted_date}
+        return content
+
+    @hybrid_property
+    def total_in_favour(self) -> int:
+        return sum(1 for v in self.votes if v.vote is True)
+
+    @hybrid_property
+    def total_against(self) -> int:
+        return sum(1 for v in self.votes if v.vote is False)
+
+    def get_user_vote(self, user_id) -> PredictionConclusionVote | None:
+        return PredictionConclusionVote.query.filter_by(
+            prediction_conclusion_id=self.id, user_id=user_id
+        ).first()
 
 class StockPick(db.Model):
     __tablename__ = "stockpick"
@@ -201,6 +263,8 @@ class StockUpdate(db.Model):
     volume = db.Column(db.Integer, nullable=False)
     average_volume = db.Column(db.Integer, nullable=False)
     created_at = db.Column(db.DateTime, default= lambda: datetime.now(timezone.utc))
+
+
 
 
 @login.user_loader
