@@ -12,7 +12,7 @@
             <div class="cell">
               <div class="block">
                 <h1 class="title">
-                  Hey {{ curren_user.user_name }}, how are your 2026 predictions going?
+                  Hey {{ user.user_name }}, how are your 2026 predictions going?
                 </h1>
               </div>
             </div>
@@ -98,7 +98,7 @@
                     <div id="prediction-{{ gentleboy.id }}" class="card">
                       <div class="columns">
                         <div class="column is-two-fifths">
-                          <p>{{ gentleboy.user_name }}</p>
+                          <a href="{{ url_for('main.profile', name=gentleboy.user_name) }}">{{ gentleboy.user_name }}</a>
                         </div>
                         <div class="column is-two-fifths">
                           <p>{{ gentleboy.total_achieved_points }} / {{ gentleboy.total_prediction_points }}</p>
@@ -124,11 +124,23 @@
 
                 <div class="is-widget-label">
                   <h2 class="subtitle is-spaced">Investment Leaderboard</h2>
+                  <div id="best-investment" class="card">
+                    {% if best_stock.current_price >= best_stock.initial_price %}
+                    <p><b>Best performing:</b> {{best_stock.name}} <span style="color: green;">({{(((best_stock.current_price / best_stock.initial_price) -1) * 100) | round(2) }}%)</span></p>
+                    {% else %}
+                    <p><b>Best performing:</b>{{best_stock.name}} <span style="color: red;">({{(((best_stock.current_price / best_stock.initial_price) -1) * 100) | round(2) }}%)</span></p>
+                    {% endif %}
+                    {% if worst_stock.current_price >= worst_stock.initial_price %}
+                    <p><b>Worst performing:</b> {{worst_stock.name}} <span style="color: green;">({{(((worst_stock.current_price / worst_stock.initial_price) -1) * 100) | round(2) }}%)</span></p>
+                    {% else %}
+                    <p><b>Worst performing:</b> {{worst_stock.name}} <span style="color: red;">({{(((worst_stock.current_price / worst_stock.initial_price) -1) * 100) | round(2) }}%)</span></p>
+                    {% endif %}
+                  </div>
                   {% for gentleboy in investments %}
                     <div id="investment-{{ gentleboy.id }}" class="card">
                       <div class="columns">
                         <div class="column is-two-fifths">
-                          <p>{{ gentleboy.user_name }}</p>
+                          <a href="{{ url_for('main.profile', name=gentleboy.user_name) }}">{{ gentleboy.user_name }}</a>
                         </div>
                         <div class="column is-two-fifths">
                           <p>€ {{ gentleboy.total_investment }}</p>

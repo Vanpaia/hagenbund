@@ -20,9 +20,13 @@ def index():
     users = User.query.all()
     investments= sorted(users, key=lambda g: g.total_investment, reverse=True)
     predictions= sorted(users, key=lambda g: g.total_prediction_points, reverse=True)
+    predictions= sorted(predictions, key=lambda g: g.total_achieved_points, reverse=True)
     conclusions = PredictionConclusion.query.filter_by(status=ConclusionStatus.ACTIVE).all()
+    best_stock = StockPick.highest_return()
+    worst_stock = StockPick.lowest_return()
 
-    return render_template('index.html', title='Gentleboys Clubhouse', user=current_user, investments=investments, predictions=predictions, votes=conclusions)
+    return render_template('index.html', title='Gentleboys Clubhouse', user=current_user, investments=investments, predictions=predictions, votes=conclusions, best_stock=best_stock, worst_stock=worst_stock)
+
 
 @bp.route('/chat', methods=['GET'])
 @login_required

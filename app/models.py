@@ -251,6 +251,14 @@ class StockPick(db.Model):
     def total_return(self):
         return ((self.current_price - self.initial_price) / self.initial_price) * 100
 
+    @classmethod
+    def highest_return(cls):
+        return db.session.query(cls).order_by((((cls.current_price / cls.initial_price) - 1) * 100).desc()).first()
+
+    @classmethod
+    def lowest_return(cls):
+        return db.session.query(cls).order_by((((cls.current_price / cls.initial_price) - 1) * 100).asc()).first()
+
 class StockUpdate(db.Model):
     __tablename__ = "stockupdate"
     id = db.Column(db.Integer, primary_key=True)
