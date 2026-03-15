@@ -65,8 +65,9 @@ def profile(name):
 @login_required
 def stock(symbol):
     stock = StockPick.query.filter_by(symbol=symbol).first_or_404()
+    update = StockUpdate.query.filter_by(stock_id=stock.id).order_by(StockUpdate.created_at.desc()).first_or_404()
 
-    return render_template('stock.html', stock=stock)
+    return render_template('stock.html', stock=stock, update=update)
 
 @bp.route('/api/stocks/search', methods=['POST'])
 def search_stocks():

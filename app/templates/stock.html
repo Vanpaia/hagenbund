@@ -26,9 +26,23 @@
               </div>
             </div>
             <div class="cell">
+              <div class="block">
+                {% if update.change_percentage < 0 %}
+                <p><b>Last Change:</b> <span style="color: red;">{{ update.change_percentage | round(2) }}%</span></p>
+                {% else %}
+                <p><b>Last Change:</b> <span style="color: green;">{{ update.change_percentage | round(2) }}%</span></p>
+                {% endif %}
+                <p><b>Beta:</b> {{ update.beta | round(2) }}</p>
+                <p><b>Trading Volume:</b> {{ update.volume }}</p>
+                <p><b>Average Volume:</b> {{ update.average_volume }}</p>
+              </div>
+              <div class="block">
+                <p><b>Last Checked:</b> {{ update.formatted_date }}</p>
+              </div>
             </div>
           </div>
         </div>
+      </div>
     </section>
     <section class="section is-main-section">
       <nav id="current_stocks" class="panel is-primary">
@@ -80,6 +94,16 @@
             </div>
             <div class="column">
               <p>{{ stock.sector }} / {{ stock.industry }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="panel-block is-block">
+          <div class="columns">
+            <div class="column">
+              <p><b>Market Cap:</b></p>
+            </div>
+            <div class="column">
+              <p>{{ update.market_cap }}</p>
             </div>
           </div>
         </div>
