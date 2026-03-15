@@ -61,6 +61,13 @@ def profile(name):
 
     return render_template('profile.html', user=user, predictions=sorted_predictions, stockpicks=stockpicks, achievements=achievements, total_points=total_points, total_likelihood=total_likelihood)
 
+@bp.route('/stock/<symbol>', methods=['GET'])
+@login_required
+def stock(symbol):
+    stock = StockPick.query.filter_by(symbol=symbol).first_or_404()
+
+    return render_template('stock.html', stock=stock)
+
 @bp.route('/api/stocks/search', methods=['POST'])
 def search_stocks():
     """Search for a specific stock ticker using an external API"""

@@ -126,9 +126,9 @@
                   <h2 class="subtitle is-spaced">Investment Leaderboard</h2>
                   <div id="best-investment" class="card">
                     {% if best_stock.current_price >= best_stock.initial_price %}
-                    <p><b>Best performing:</b> {{best_stock.name}} <span style="color: green;">({{(((best_stock.current_price / best_stock.initial_price) -1) * 100) | round(2) }}%)</span></p>
+                    <p><b>Best performing:</b> <a href="{{ url_for('main.stock', symbol=best_stock.symbol) }}">{{best_stock.name}}</a> <span style="color: green;">({{(((best_stock.current_price / best_stock.initial_price) -1) * 100) | round(2) }}%)</span></p>
                     {% else %}
-                    <p><b>Best performing:</b>{{best_stock.name}} <span style="color: red;">({{(((best_stock.current_price / best_stock.initial_price) -1) * 100) | round(2) }}%)</span></p>
+                    <p><b>Best performing:</b> <a href="{{ url_for('main.stock', symbol=worst_stock.symbol) }}">{{worst_stock.name}}</a> <span style="color: red;">({{(((best_stock.current_price / best_stock.initial_price) -1) * 100) | round(2) }}%)</span></p>
                     {% endif %}
                     {% if worst_stock.current_price >= worst_stock.initial_price %}
                     <p><b>Worst performing:</b> {{worst_stock.name}} <span style="color: green;">({{(((worst_stock.current_price / worst_stock.initial_price) -1) * 100) | round(2) }}%)</span></p>
