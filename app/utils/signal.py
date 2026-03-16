@@ -1,12 +1,12 @@
 import subprocess
 
-def send_signal_message(account_number, recipient_number, message):
+def send_signal_message(account_number, group_id, message):
     command = [
         "signal-cli",
         "-a", account_number,
         "send",
-        "-m", message,
-        recipient_number
+        "-g", group_id,
+        "-m", message 
     ]
     try:
         result = subprocess.run(command, check=True, capture_output=True, text=True)
