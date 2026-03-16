@@ -22,9 +22,21 @@ class PredictionStatus(Enum):
     SUCCESS = "success"
     FAILED = "failed"
 
+    def sentence(self):
+        return {
+            PredictionStatus.SUCCESS: "came true",
+            PredictionStatus.FAILED: "did not come true",
+        }[self]
+
 class ConclusionOutcome(Enum):
     SUCCESS = "success"
     FAILED = "failed"
+
+    def sentence(self):
+        return {
+            ConclusionOutcome.SUCCESS: "successful",
+            ConclusionOutcome.FAILED: "failed",
+        }[self]
 
 class ConclusionStatus(Enum):
     ACTIVE = "active"
@@ -59,31 +71,65 @@ class User(UserMixin, db.Model):
 
     @hybrid_property
     def total_prediction_points(self) -> int:
-        return sum(p.points or 0 for p in self.predictions if (p.status == PredictionStatus.PENDING or p.status == PredictionStatus.VOTING))
+        return sum((p.points or 0) * (p.multiplier or 1) for p in self.predictions if (p.status == PredictionStatus.PENDING or p.status == PredictionStatus.VOTING))
 
     @total_prediction_points.inplace.expression
     @classmethod
     def _total_prediction_points_expression(cls):
         return (
-            select(func.sum(Prediction.points))
+            select(func.sum(Prediction.points * Prediction.multiplier))
             .where(Prediction.user_id == cls.id)
-            .label("total_points")
+            .label("total_prediction_points")
         )
 
     @hybrid_property
     def total_achieved_points(self) -> int:
         # Python logic
-        return sum(p.points or 0 for p in self.predictions if p.status == PredictionStatus.SUCCESS)
+        return sum((p.points or 0) * (p.multiplier or 1) for p in self.predictions if p.status == PredictionStatus.SUCCESS)
 
     @total_achieved_points.inplace.expression
     @classmethod
     def _total_achieved_points_expression(cls):
         # SQL logic
         return (
-            select(coalesce(func.sum(Prediction.points), 0))
+            select(func.sum(coalesce(Prediction.points, 0) * coalesce(Prediction.multiplier, 1)))
             .where(Prediction.user_id == cls.id)
             .where(Prediction.status == PredictionStatus.SUCCESS)
-            .correlate(cls) # Helps SQLAlchemy understand the relationship in subqueries
+            .correlate(cls)
+            .label("total_achieved_points")
+        )
+
+    @hybrid_property
+    def total_failed_points(self) -> int:
+        # Python logic
+        return sum((p.points or 0) * (p.multiplier or 1) for p in self.predictions if p.status == PredictionStatus.FAILED)
+
+    @total_achieved_points.inplace.expression
+    @classmethod
+    def _total_failed_points_expression(cls):
+        # SQL logic
+        return (
+            select(func.sum(coalesce(Prediction.points, 0) * coalesce(Prediction.multiplier, 1)))
+            .where(Prediction.user_id == cls.id)
+            .where(Prediction.status == PredictionStatus.FAILED)
+            .correlate(cls)
+            .label("total_achieved_points")
+        )
+
+    @hybrid_property
+    def total_outstanding_points(self) -> int:
+        # Python logic
+        return sum((p.points or 0) * (p.multiplier or 1) for p in self.predictions if p.status in (PredictionStatus.PENDING, PredictionStatus.VOTING))
+
+    @total_achieved_points.inplace.expression
+    @classmethod
+    def _total_outstanding_points_expression(cls):
+        # SQL logic
+        return (
+            select(func.sum(coalesce(Prediction.points, 0) * coalesce(Prediction.multiplier, 1)))
+            .where(Prediction.user_id == cls.id)
+            .where(Prediction.status.in_([PredictionStatus.PENDING, PredictionStatus.VOTING]))
+            .correlate(cls)
             .label("total_achieved_points")
         )
 
@@ -127,13 +173,19 @@ class Prediction(db.Model):
     category = db.Column(db.Enum(Category), nullable=False)
     created_at = db.Column(db.Date, default= lambda: datetime.now(timezone.utc))
     status = db.Column(db.Enum(PredictionStatus), default=PredictionStatus.PENDING)
+    position = db.Column(db.Integer)
 
     points = db.Column(db.Integer, nullable=True)
+    multiplier = db.Column(db.Integer, default=1)
     likelihood = db.Column(db.Float, nullable=True)
 
     author = db.relationship("User", back_populates="predictions")
     conclusions = db.relationship("PredictionConclusion", back_populates="prediction")
     
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'category', 'position', name='uq_user_category_position'),
+    )
+
     def to_dict(self):
         formatted_date = self.created_at.isoformat() if self.created_at else None
         content = {"title": self.title,

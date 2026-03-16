@@ -101,7 +101,7 @@
                           <a href="{{ url_for('main.profile', name=gentleboy.user_name) }}">{{ gentleboy.user_name }}</a>
                         </div>
                         <div class="column is-two-fifths">
-                          <p>{{ gentleboy.total_achieved_points }} / {{ gentleboy.total_prediction_points }}</p>
+                          <p><span style="color:green;">{{ gentleboy.total_achieved_points }}</span> / {{ gentleboy.total_outstanding_points }} / <span style="color:red;">{{ gentleboy.total_failed_points }}</span></p>
                         </div>
                       </div>
                     </div>

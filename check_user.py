@@ -7,7 +7,5 @@ app = create_app(config_class=Config)
 
 with app.app_context():
     users = User.query.all()
-    for user in users:
-        print(user.user_name)
-        print(user.total_prediction_points)
-        print(user.total_achieved_points)
+    for x in users:
+        print(x.id, x.user_name, x.total_investment)

@@ -1,5 +1,12 @@
 {% extends "base.html" %}
 
+{% macro status_class(prediction) %}
+  {%- if prediction.multiplier > 1 %} has-background-warning
+  {%- elif prediction.status.value == 'success' %} has-background-success has-text-white
+  {%- elif prediction.status.value == 'failed' %} has-background-danger has-text-white
+  {%- else %}{%- endif %}
+{%- endmacro %}
+
 {% block content %}
   <!-- Main Content -->
   <div class="main-content">
@@ -69,6 +76,7 @@
               <h1 class="title">
                 Total Possible Points {{ total_points }}
               </h1>
+              <h1 class="subtitle"><span style="color:green;">{{ current_user.total_achieved_points }}</span> / {{ current_user.total_outstanding_points }} / <span style="color:red;">{{ current_user.total_failed_points }}</span></h1>
               <h1 class="title">
                 Total Likelihood {{ total_likelihood }} %
               </h1>
@@ -94,13 +102,13 @@
           {% for i in range(5) %}
             <div class="cell">
               {% if predictions.POL[i] %}
-                <div class="box{{ ' is-primary' if predictions.POL[i].status.value == 'success' }}">
+                <div class="box{{ status_class(predictions.POL[i]) }}">
                   <strong>{{ predictions.POL[i].title }}</strong><br>
                   {% if predictions.POL[i].points %}
-                    <p>{{ predictions.POL[i].points }} / {{ "%.2f"|format(predictions.POL[i].likelihood) }} %</p>
+                    <p>{{ (predictions.POL[i].points * predictions.POL[i].multiplier) }} / {{ "%.2f"|format(predictions.POL[i].likelihood) }} %</p>
                   {% endif %}
                   {% if predictions.POL[i].status.value == "pending" %}
-                  <button class="button is-small is-primary mt-2 open-conclusion-modal"
+                  <button class="button is-small is-info is-light mt-2 open-conclusion-modal"
                           data-prediction-id="{{ predictions.POL[i].id }}">
                     Submit
                   </button>
@@ -127,13 +135,13 @@
           {% for i in range(5) %}
             <div class="cell">
               {% if predictions.EUR[i] %}
-                <div class="box">
+                <div class="box{{ status_class(predictions.EUR[i]) }}">
                   <strong>{{ predictions.EUR[i].title }}</strong><br>
                   {% if predictions.EUR[i].points %}
-                    <p>{{ predictions.EUR[i].points }} / {{ "%.2f"|format(predictions.EUR[i].likelihood) }} %</p>
+                    <p>{{ (predictions.EUR[i].points * predictions.EUR[i].multiplier) }} / {{ "%.2f"|format(predictions.EUR[i].likelihood) }} %</p>
                   {% endif %}
                   {% if predictions.EUR[i].status.value == "pending" %}
-                  <button class="button is-small is-primary mt-2 open-conclusion-modal"
+                  <button class="button is-small is-info is-light mt-2 open-conclusion-modal"
                           data-prediction-id="{{ predictions.EUR[i].id }}">
                     Submit
                   </button>
@@ -158,13 +166,13 @@
           {% for i in range(5) %}
             <div class="cell">
               {% if predictions.ENT[i] %}
-                <div class="box">
+                <div class="box{{ status_class(predictions.ENT[i]) }}">
                   <strong>{{ predictions.ENT[i].title }}</strong><br>
                   {% if predictions.ENT[i].points %}
-                    <p>{{ predictions.ENT[i].points }} / {{ "%.2f"|format(predictions.ENT[i].likelihood) }} %</p>
+                    <p>{{ (predictions.ENT[i].points * predictions.ENT[i].multiplier) }} / {{ "%.2f"|format(predictions.ENT[i].likelihood) }} %</p>
                   {% endif %}
                   {% if predictions.ENT[i].status.value == "pending" %}
-                  <button class="button is-small is-primary mt-2 open-conclusion-modal"
+                  <button class="button is-small is-info is-light mt-2 open-conclusion-modal"
                           data-prediction-id="{{ predictions.ENT[i].id }}">
                     Submit
                   </button>
@@ -191,13 +199,13 @@
           {% for i in range(5) %}
             <div class="cell">
               {% if predictions.SCI[i] %}
-                <div class="box">
+                <div class="box{{ status_class(predictions.SCI[i]) }}">
                   <strong>{{ predictions.SCI[i].title }}</strong><br>
                   {% if predictions.SCI[i].points %}
-                    <p>{{ predictions.SCI[i].points }} / {{ "%.2f"|format(predictions.SCI[i].likelihood) }} %</p>
+                    <p>{{ (predictions.SCI[i].points * predictions.SCI[i].multiplier) }} / {{ "%.2f"|format(predictions.SCI[i].likelihood) }} %</p>
                   {% endif %}
                   {% if predictions.SCI[i].status.value == "pending" %}
-                  <button class="button is-small is-primary mt-2 open-conclusion-modal"
+                  <button class="button is-small is-info is-light mt-2 open-conclusion-modal"
                           data-prediction-id="{{ predictions.SCI[i].id }}">
                     Submit
                   </button>
@@ -224,13 +232,13 @@
           {% for i in range(5) %}
             <div class="cell">
               {% if predictions.ECO[i] %}
-                <div class="box">
+                <div class="box{{ status_class(predictions.ECO[i]) }}">
                   <strong>{{ predictions.ECO[i].title }}</strong><br>
                   {% if predictions.ECO[i].points %}
-                    <p>{{ predictions.ECO[i].points }} / {{ "%.2f"|format(predictions.ECO[i].likelihood) }} %</p>
+                    <p>{{ (predictions.ECO[i].points * predictions.ECO[i].multiplier) }} / {{ "%.2f"|format(predictions.ECO[i].likelihood) }} %</p>
                   {% endif %}
                   {% if predictions.ECO[i].status.value == "pending" %}
-                  <button class="button is-small is-primary mt-2 open-conclusion-modal"
+                  <button class="button is-small is-info is-light mt-2 open-conclusion-modal"
                           data-prediction-id="{{ predictions.ECO[i].id }}">
                     Submit
                   </button>
