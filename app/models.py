@@ -59,7 +59,7 @@ class User(UserMixin, db.Model):
 
     @hybrid_property
     def total_prediction_points(self) -> int:
-        return sum(p.points or 0 for p in self.predictions)
+        return sum(p.points or 0 for p in self.predictions if (p.status == PredictionStatus.PENDING or p.status == PredictionStatus.VOTING))
 
     @total_prediction_points.inplace.expression
     @classmethod

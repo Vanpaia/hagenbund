@@ -128,12 +128,3 @@ for round_num, data in obj.items():
         point_contribution = round((100-int(result["vote"])) * player_results[player]["weighted_score"])
         prediction_results[round_num]["points"] += point_contribution
 
-with app.app_context():
-    try:
-        for key, value in prediction_results.items():
-            print(value["id"], value["points"])
-            prediction = Prediction.query.get(value["id"])
-            prediction.points = value["points"]
-        db.session.commit()
-    except:
-        db.session.rollback()
