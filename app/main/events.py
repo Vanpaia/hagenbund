@@ -1,11 +1,12 @@
 from flask_socketio import emit, join_room, leave_room
 from flask import request
 from .. import socketio
+from app import db
 from app.live_game import game_instance
 from app.live_game import background_timer_task
 from flask_login import current_user
 from app.registry import online_users
-from app.models import Prediction, Category, User
+from app.models import Prediction, Category, User, UserAchievement
 
 
 @socketio.on('connect')
@@ -18,6 +19,19 @@ def connect():
     online_users.add_user(current_user.user_name)
     # Broadcast the updated list to everyone
     emit('user_list', online_users.get_all_users(), broadcast=True)
+    outstanding_achievements = UserAchievement.query.filter_by(user_id=current_user.id, is_notified=False).all()
+    if outstanding_achievements:
+        for award in outstanding_achievements:
+            socketio.emit('achievement_unlocked', {
+                'title': award.achievement.title,
+                'description': award.achievement.description, 
+                'image': award.achievement.logo, 
+                'id': award.id,
+                'earned_at': award.earned_at.isoformat(),
+            }, to=f"user_{current_user.id}")
+            award.is_notified = True
+        db.session.commit()
+    
 
 @socketio.on('disconnect')
 def disconnect():

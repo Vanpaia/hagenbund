@@ -201,6 +201,9 @@ def create_conclusion():
 
     db.session.commit()
 
+    if (conclusion.prediction.author.id != conclusion.user_id) and (conclusion.outcome == ConclusionOutcome.FAILED):
+        brutus = User.query.get(conclusion.user_id)
+        set_achievement(16, brutus.user_name, socketio)
 
     return jsonify({
         'message': 'Prediction conclusion successfully created',
@@ -287,8 +290,19 @@ def create_conclusion_vote():
     db.session.flush()
     
     if conclusion.total_in_favour >= Config.VOTE_LIMIT:
+        if conclusion.outcome == ConclusionOutcome.SUCCESS:
+            if conclusion.prediction.likelihood < 25.0:
+                set_achievement(14, conclusion.prediction.author.user_name, socketio)
+            achievement_test = Prediction.query.filter_by(status=PredictionStatus.SUCCESS).first()
+            if not achievement_test:
+                set_achievement(12, conclusion.prediction.author.user_name, socketio)
+        if conclusion.outcome == ConclusionOutcome.FAILED:
+            set_achievement(13, conclusion.prediction.author.user_name, socketio)
         conclusion.status = ConclusionStatus.ACCEPTED
     elif conclusion.total_against >= Config.VOTE_LIMIT:
+        if conclusion.outcome == ConclusionOutcome.FAILED and (conclusion.prediction.author.id != conclusion.user_id):
+            omar = User.query.get(conclusion.user_id)
+            set_achievement(17, omar.user_name, socketio)
         conclusion.status = ConclusionStatus.REJECTED
 
     db.session.commit()
