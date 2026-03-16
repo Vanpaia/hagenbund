@@ -17,6 +17,7 @@ with app.app_context():
     buffet = Achievement(id=19, title="Warren Buffet", description="Financial genius is selling you short. And you know short selling.", logo="achievement_buffet.png")
     cramer = Achievement(id=20, title="Cramer Index", description="Just like Cramer we should learn to always invest in the opposite of what you propose.", logo="achievement_cramer.png")
     beaten = Achievement(id=21, title="Pyrrhic Victory", description="You took hits too, but you are first and that's what matters.", logo="achievement_beaten.png")
+    balanced = Achievement(id=22, title="Perfectly Balanced", description="Do you enjoy the chaos or is it you that brings order? Whatever the case, you own the most performant and the least perfomant stock. Perfectly balanced, as all things should be.", logo="achievement_balanced.png")
     db.session.add(kanye)
     db.session.add(blood)
     db.session.add(darksouls)
@@ -28,4 +29,5 @@ with app.app_context():
     db.session.add(buffet)
     db.session.add(beaten)
     db.session.add(cramer)
+    db.session.add(balanced)
     db.session.commit()

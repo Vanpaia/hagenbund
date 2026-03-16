@@ -24,3 +24,5 @@ class Config(object):
     SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'devdatabase.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     VOTE_LIMIT = int(config["DEFAULT"]["vote_limit"])
+    PHONE_NUMBER = os.environ.get('PHONE_NUMBER')
+    SIGNAL_GROUP = os.environ.get('SIGNAL_GROUP')
