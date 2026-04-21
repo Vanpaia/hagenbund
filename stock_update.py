@@ -11,6 +11,7 @@ import sys
 app = create_app(config_class=Config)
 if __name__ == "__main__":
     with app.app_context():
+
         old_ranking = {}
         user1 = User.query.all()
         sorted_user1 = sorted(user1, key=lambda g: g.total_investment, reverse=True)
@@ -96,7 +97,7 @@ if __name__ == "__main__":
                 set_achievement(21, gentleboy.user_name, socketio)
         
         if sorted_user1[0].user_name != sorted_user2[0].user_name:
-            message = f'Congrats {sorted_user2[0].user_name} you have dethroned {sorted_user1[0].user_name} and are now the best investor in this group with an investment of € {sorted_user2[0].total_investment}! Go make fun of all the poor people in this group.'
+            message = f'Stock Game Leaderboard Change!\n\nCongrats {sorted_user2[0].user_name} you have dethroned {sorted_user1[0].user_name} and are now the best investor in this group with an investment of € {sorted_user2[0].total_investment}! Go make fun of all the poor people in this group.'
             send_signal_message(Config.PHONE_NUMBER, Config.SIGNAL_GROUP, message)
 
 

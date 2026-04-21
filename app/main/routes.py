@@ -211,7 +211,7 @@ def create_conclusion():
         brutus = User.query.get(conclusion.user_id)
         set_achievement(16, brutus.user_name, socketio)
 
-    message = f'Attention fellow gentleboys! {current_user.user_name} has claimed the {conclusion.outcome.sentence()} conclusion of the following prediction by {conclusion.prediction.author.user_name}: {conclusion.prediction.title}. They support this claim saying: {conclusion.description}. Go cast your vote at https://bund.hagen.social'
+    message = f'Opened Prediction Conclusion!\n\n{current_user.user_name} has claimed the {conclusion.outcome.sentence()} conclusion of the following prediction by {conclusion.prediction.author.user_name}: {conclusion.prediction.title}.\n\nThey support this claim saying: {conclusion.description}. Go cast your vote at https://bund.hagen.social'
     send_signal_message(Config.PHONE_NUMBER, Config.SIGNAL_GROUP, message)
 
     return jsonify({
@@ -309,11 +309,11 @@ def create_conclusion_vote():
         if conclusion.outcome == ConclusionOutcome.FAILED:
             set_achievement(13, conclusion.prediction.author.user_name, socketio)
 
-        message = f'{conclusion.outcome.upper()}! {conclusion.prediction.author.user_name} the prediction worth {conclusion.prediction.points * conclusion.prediction.multiplier } points { conclusion.prediction.status.sentence() }. The group gave a {conclusion.prediction.likelihood}% chance of succeeding to the prediction that: {conclusion.prediction.title}.'
-        send_signal_message(Config.PHONE_NUMBER, Config.SIGNAL_GROUP, message)
-
         conclusion.prediction.status = PredictionStatus(conclusion.outcome.value)
         conclusion.status = ConclusionStatus.ACCEPTED
+
+        message = f'Prediction conclusion: {conclusion.outcome.value.upper()}!\n\n{conclusion.prediction.author.user_name} made a prediction worth {conclusion.prediction.points * conclusion.prediction.multiplier } points { conclusion.prediction.status.sentence() }. The group gave a {conclusion.prediction.likelihood}% chance of succeeding to the prediction that: {conclusion.prediction.title}.'
+        send_signal_message(Config.PHONE_NUMBER, Config.SIGNAL_GROUP, message)
 
     elif conclusion.total_against >= Config.VOTE_LIMIT:
         if conclusion.outcome == ConclusionOutcome.FAILED and (conclusion.prediction.author.id != conclusion.user_id):
@@ -428,8 +428,14 @@ def update_conclusion_vote(vote_id):
                 set_achievement(12, conclusion.prediction.author.user_name, socketio)
         if conclusion.outcome == ConclusionOutcome.FAILED:
             set_achievement(13, conclusion.prediction.author.user_name, socketio)
+
         conclusion.prediction.status = PredictionStatus(conclusion.outcome.value)
         conclusion.status = ConclusionStatus.ACCEPTED
+
+        message = f'Prediction conclusion: {conclusion.outcome.value.upper()}!\n\n{conclusion.prediction.author.user_name} made a prediction worth {conclusion.prediction.points * conclusion.prediction.multiplier } points { conclusion.prediction.status.sentence() }. The group gave a {conclusion.prediction.likelihood}% chance of succeeding to the prediction that: {conclusion.prediction.title}.'
+        send_signal_message(Config.PHONE_NUMBER, Config.SIGNAL_GROUP, message)
+
+
     elif conclusion.total_against >= Config.VOTE_LIMIT:
         if conclusion.outcome == ConclusionOutcome.FAILED and (conclusion.prediction.author.id != conclusion.user_id):
             omar = User.query.get(conclusion.user_id)

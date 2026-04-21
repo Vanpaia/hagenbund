@@ -54,8 +54,8 @@
                           {% endif %}
                         </div>
                         <div class="column is-one-fifths">
-                          <progress id="{{ vote.id }}-success" class="progress is-primary reading-tracher-fixed" value="{{ vote.total_in_favour }}" max="4"></progress>
-                          <progress id="{{ vote.id }}-failure" class="progress is-danger reading-tracher-fixed" value="{{ vote.total_against }}" max="4"></progress>
+                          <progress id="{{ vote.id }}-success" class="progress is-primary reading-tracher-fixed" value="{{ vote.total_in_favour }}" max="3"></progress>
+                          <progress id="{{ vote.id }}-failure" class="progress is-danger reading-tracher-fixed" value="{{ vote.total_against }}" max="3"></progress>
                         </div>
                         <div class="column is-one-fifths">
                           {% set user_vote = vote.get_user_vote(current_user.id) %}
