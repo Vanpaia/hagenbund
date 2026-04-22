@@ -174,6 +174,7 @@ def delete_prediction(prediction_id):
     }), 200
 
 @bp.route('/api/conclusion', methods=['POST'])
+@login_required
 def create_conclusion():
     """Create a new prediction conclusion"""
     data = request.get_json()
@@ -268,6 +269,7 @@ def update_conclusion(conclusion_id):
     return jsonify({'message': 'Conclusion updated', 'id': conclusion.id}), 200
 
 @bp.route('/api/conclusion/vote', methods=['POST'])
+@login_required
 def create_conclusion_vote():
     """Create a new prediction conclusion vote"""
     data = request.get_json()
