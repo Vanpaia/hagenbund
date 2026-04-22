@@ -1,4 +1,6 @@
 alembic==1.16.5
+pytest==9.0.3
+pytest-mock==3.15.1
 bidict==0.23.1
 blinker==1.9.0
 certifi==2025.11.12
