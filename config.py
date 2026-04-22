@@ -26,3 +26,5 @@ class Config(object):
     VOTE_LIMIT = int(config["DEFAULT"]["vote_limit"])
     PHONE_NUMBER = os.environ.get('PHONE_NUMBER')
     SIGNAL_GROUP = os.environ.get('SIGNAL_GROUP')
+    SIGNAL_CLI_PATH = os.environ.get('SIGNAL_CLI_PATH', '/home/hagen/signal-cli/signal-cli')
+    SIGNAL_LOG_PATH = os.environ.get('SIGNAL_LOG_PATH', os.path.join(basedir, 'logs', 'signal_errors.log'))
