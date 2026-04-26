@@ -5,13 +5,14 @@ import app
 from config import Config
 from .. import socketio
 from app.main import bp
-from app.models import Prediction, Category, PredictionConclusion, PredictionConclusionVote, PredictionStatus, User, StockPick, StockUpdate, PredictionVote, UserAchievement, ConclusionOutcome, ConclusionStatus
+from app.models import Prediction, Category, PredictionConclusion, PredictionConclusionVote, PredictionStatus, User, StockPick, StockUpdate, PredictionVote, UserAchievement, ConclusionOutcome, ConclusionStatus, Bet, BetVote, BetConclusion, BetConclusionVote
 from app.utils.stocks import search_stock_ticker, get_stock_info
 from app.utils.signal import send_signal_message
 from app.achievements import set_achievement
 
-from sqlalchemy import func
+from sqlalchemy import func 
 from collections import defaultdict
+from datetime import datetime, timedelta, timezone, date
 
 
 @bp.route('/', methods=['GET'])
@@ -62,6 +63,20 @@ def profile(name):
 
     return render_template('profile.html', user=user, predictions=sorted_predictions, stockpicks=stockpicks, achievements=achievements, total_points=total_points, total_likelihood=total_likelihood)
 
+@bp.route('/bets', methods=['GET'])
+@login_required
+def bets():
+    now_aware = datetime.now(timezone.utc)
+    print(now_aware)
+    now_naive = now_aware.replace(tzinfo=None)
+    print(now_naive)
+    bets = Bet.query.filter_by(status=PredictionStatus.PENDING).all()
+
+    for x in bets:
+        print(x.title, x.vote_until)
+
+    return render_template('bets.html', bets=bets, today=now_naive)
+
 @bp.route('/stock/<symbol>', methods=['GET'])
 @login_required
 def stock(symbol):
@@ -85,6 +100,341 @@ def search_stocks():
     return jsonify({
         'message': 'Stock search sucessful',
         'data': result
+    }), 200
+
+@bp.route('/api/bets', methods=['POST'])
+def create_bet():
+    """Create a new bet"""
+    data = request.get_json()
+    print(data)
+
+    # Validate required fields
+    required_fields = ['title']
+    for field in required_fields:
+        if field not in data:
+            return jsonify({'error': f'Missing required field: {field}'}), 400
+
+    open_bets = Bet.query.filter(
+        Bet.user_id == (data.get("user_id") or current_user.id),
+        Bet.status.in_([PredictionStatus.PENDING, PredictionStatus.VOTING])
+    ).first()
+
+    if open_bets:
+        return jsonify({"error": "You already have an active bet!"}), 400
+
+    now = datetime.now(timezone.utc)
+    d = int(data.get("days") or 0)
+    h = int(data.get("hours") or 0)
+    m = int(data.get("minutes") or 0)
+
+    if d == 0 and h == 0 and m == 0:
+        h = 1
+
+    # 3. Create the timedelta
+    open_timedelta = timedelta(days=d, hours=h, minutes=m)   
+    vote_until = now + open_timedelta
+    print(vote_until)
+
+    bet = Bet(user_id=data.get("user_id", current_user.id), title=data.get("title"), description=data.get("description"), vote_until=vote_until)
+    db.session.add(bet)
+    db.session.commit()
+
+    return jsonify({
+        'message': 'Prediction successfully created',
+        'id': bet.id,
+        'data': bet.to_dict()
+    }), 200
+
+@bp.route('/api/bets', methods=['GET'])
+@login_required
+def fetch_bets():
+    """Fetch bets"""
+
+    #Pulling the data from the URL for further use
+    user = current_user
+
+    bets = Bet.query.filter_by(user_id=user.id).all()
+    data = []
+    for x in bets:
+        data.append(x.to_dict())
+
+    return jsonify({
+        'message': 'Search successfull',
+        'id': None,
+        'data': data
+    }), 200
+
+@bp.route('/api/bets/<int:bet_id>', methods=['PUT', 'PATCH'])
+def update_bet(bet_id):
+    """Update an existing bet"""
+    bet = Bet.query.get_or_404(bet_id)
+    data = request.get_json()
+    
+    # Update fields if provided
+    if 'title' in data:
+        prediction.title = data['title']
+    if 'subtitle' in data:
+        prediction.description = data['description']
+    
+    db.session.commit()
+    
+    return jsonify({
+        'message': 'Bet successfully updated',
+        'id': bet.id,
+        'data': bet.to_dict()
+    }), 200
+
+@bp.route('/api/bets/<int:bet_id>', methods=['DELETE'])
+def delete_bet(bet_id):
+    """Delete a bet"""
+    bet = Bet.query.get_or_404(bet_id)
+    
+    # 1. Capture the data while the object is still "alive" and attached
+    bet_data = bet.to_dict()
+    bet_id_val = bet.id
+    
+    # 2. Perform the deletion
+    db.session.delete(bet)
+    db.session.commit()
+    
+    # 3. Return the captured data
+    return jsonify({
+        'message': 'Bet successfully deleted',
+        'id': bet_id_val,
+        'data': bet_data
+    }), 200
+
+@bp.route('/api/bet/vote', methods=['POST'])
+@login_required
+def create_bet_vote():
+    """Create a new bet vote"""
+    data = request.get_json()
+    user_id=data.get("user_id", current_user.id)
+
+    # Validate required fields
+    required_fields = ['bet_id', 'vote']
+    for field in required_fields:
+        if field not in data:
+            return jsonify({'error': f'Missing required field: {field}'}), 400
+
+
+    bet = Bet.query.filter_by(
+        id=data["bet_id"]
+    ).first()
+
+    if not bet:
+        return jsonify({'error': 'No active bet for this vote exists'}), 400   
+
+    existing = BetVote.query.filter_by(
+        bet_id=data["bet_id"], user_id=user_id
+    ).first()
+
+    if existing:
+        return jsonify({'error': 'A vote for this bet already exists'}), 409
+
+    vote = BetVote(bet_id=bet.id, user_id=user_id, vote=data.get("vote"))
+    db.session.add(vote)
+    db.session.commit()
+
+    return jsonify({
+        'message': 'Bet vote successfully created',
+        'id': vote.id,
+        'data': {'vote': vote.vote, 'status': vote.bet.status.value}
+    }), 201
+
+@bp.route('/api/bet/vote/<int:vote_id>', methods=['PUT', 'PATCH'])
+@login_required
+def update_bet_vote(vote_id):
+    """Update an existing bet vote"""
+    vote = BetVote.query.get_or_404(vote_id)
+    data = request.get_json()
+
+    if vote.user_id != current_user.id:
+        return jsonify({'error': 'Unauthorized'}), 403
+ 
+    # Update fields if provided
+    if 'vote' in data:
+        vote.vote= data['vote']
+
+    db.session.commit()
+
+    return jsonify({
+        'message': 'Bet vote successfully updated',
+        'id': vote.id,
+        'data': {'vote': vote.vote, 'status': vote.bet.status.value}
+    }), 200
+
+@bp.route('/api/bet-conclusion', methods=['POST'])
+@login_required
+def create_bet_conclusion():
+    """Create a new bet conclusion"""
+    data = request.get_json()
+
+    # Validate required fields
+    required_fields = ['bet_id', 'description', 'outcome']
+    for field in required_fields:
+        if field not in data:
+            return jsonify({'error': f'Missing required field: {field}'}), 400
+
+
+    existing = BetConclusion.query.filter_by(
+        prediction_id=data["bet_id"], status=ConclusionStatus.ACTIVE
+    ).first()
+    if existing:
+        return jsonify({'error': 'An active conclusion already exists'}), 409
+
+    try:
+        outcome = ConclusionOutcome[data.get("outcome")]
+    except KeyError:
+        return jsonify({'error': 'Invalid outcome value'}), 400
+
+    conclusion = BetConclusion(prediction_id=data.get("bet_id"), user_id=data.get("user_id", current_user.id), description=data.get("description"), url=data.get("url"), outcome=outcome)
+    db.session.add(conclusion)
+    db.session.flush()
+
+    vote = BetConclusionVote(bet_conclusion_id=conclusion.id, user_id=data.get("user_id", current_user.id), vote=True)
+    db.session.add(vote)
+
+    conclusion.bet.status = PredictionStatus.VOTING
+
+    db.session.commit()
+
+@bp.route('/api/bet-conclusion', methods=['GET'])
+@login_required
+def fetch_bet_conclusions():
+    """Fetch bet conclusions"""
+
+    #Pulling the data from the URL for further use
+    id = request.args.get('id', None)
+
+    if id:
+        conclusions = [BetConclusion.query.filter_by(id=id, status=ConclusionStatus.ACTIVE).first_or_404()]
+    else:
+        conclusions = BetConclusion.query.filter_by(status=ConclusionStatus.ACTIVE).all()
+
+    data = []
+    for x in conclusions:
+        data.append(x.to_dict())
+
+    return jsonify({
+        'message': 'Search successfull',
+        'id': None,
+        'data': data
+    }), 200
+
+@bp.route('/api/bet-conclusion/<int:bet_conclusion_id>', methods=['PATCH'])
+@login_required
+def update_bet_conclusion(bet_conclusion_id):
+    conclusion = BetConclusion.query.get_or_404(bet_conclusion_id)
+    data = request.get_json()
+
+    if 'status' in data:
+        try:
+            new_status = ConclusionStatus[data['status']]
+        except KeyError:
+            return jsonify({'error': 'Invalid status value'}), 400
+        
+        # only the submitter can cancel
+        if new_status == ConclusionStatus.CANCELLED:
+            if conclusion.user_id != current_user.id:
+                return jsonify({'error': 'Unauthorized'}), 403
+            if conclusion.status != ConclusionStatus.ACTIVE:
+                return jsonify({'error': 'Can only cancel an active conclusion'}), 409
+
+            conclusion.status = new_status
+
+    db.session.commit()
+    return jsonify({'message': 'Bet conclusion updated', 'id': conclusion.id}), 200
+
+@bp.route('/api/bet-conclusion/vote', methods=['POST'])
+@login_required
+def create_bet_conclusion_vote():
+    """Create a new bet conclusion vote"""
+    data = request.get_json()
+    user_id=data.get("user_id", current_user.id)
+
+    # Validate required fields
+    required_fields = ['bet_conclusion_id', 'vote']
+    for field in required_fields:
+        if field not in data:
+            return jsonify({'error': f'Missing required field: {field}'}), 400
+
+
+    conclusion = BetConclusion.query.filter_by(
+        id=data["bet_conclusion_id"]
+    ).first()
+
+    if not conclusion:
+        return jsonify({'error': 'No active conclusion for this vote exists'}), 400   
+
+    existing = BetConclusionVote.query.filter_by(
+        bet_conclusion_id=data["bet_conclusion_id"], user_id=user_id
+    ).first()
+
+    if existing:
+        return jsonify({'error': 'A vote for this bet conclusion already exists'}), 409
+
+    vote = BetConclusionVote(bet_conclusion_id=conclusion.id, user_id=user_id, vote=data.get("vote"))
+    db.session.add(vote)
+    db.session.flush()
+    
+    if conclusion.total_in_favour >= Config.VOTE_LIMIT:
+
+        conclusion.prediction.status = PredictionStatus(conclusion.outcome.value)
+        conclusion.status = ConclusionStatus.ACCEPTED
+
+        message = f'Bet conclusion: {conclusion.outcome.value.upper()}!\n\n{conclusion.bet.author.user_name} made a bet { conclusion.bet.status.sentence() }. The bet was: {conclusion.bet.title}.'
+        send_signal_message(Config.PHONE_NUMBER, Config.SIGNAL_GROUP, message)
+
+    elif conclusion.total_against >= Config.VOTE_LIMIT:
+        conclusion.status = ConclusionStatus.REJECTED
+        conclusion.bet.status = PredictionStatus.PENDING
+
+    db.session.commit()
+
+    return jsonify({
+        'message': 'Bet conclusion vote successfully created',
+        'id': vote.id,
+        'data': {'vote': vote.vote, 'status': vote.conclusion.status.value}
+    }), 201
+
+@bp.route('/api/bet-conclusion/vote/<int:vote_id>', methods=['PUT', 'PATCH'])
+@login_required
+def update_bet_conclusion_vote(vote_id):
+    """Update an existing bet conclusion vote"""
+    vote = BetConclusionVote.query.get_or_404(vote_id)
+    data = request.get_json()
+
+    if vote.user_id != current_user.id:
+        return jsonify({'error': 'Unauthorized'}), 403
+ 
+    conclusion = BetConclusion.query.filter_by(id=vote.bet_conclusion_id).first()
+
+    # Update fields if provided
+    if 'vote' in data:
+        vote.vote= data['vote']
+
+    db.session.flush()
+
+    
+    if conclusion.total_in_favour >= Config.VOTE_LIMIT:
+        conclusion.prediction.status = PredictionStatus(conclusion.outcome.value)
+        conclusion.status = ConclusionStatus.ACCEPTED
+
+        message = f'Bet conclusion: {conclusion.outcome.value.upper()}!\n\n{conclusion.bet.author.user_name} made a bet { conclusion.bet.status.sentence() }. The bet was: {conclusion.bet.title}.'
+        send_signal_message(Config.PHONE_NUMBER, Config.SIGNAL_GROUP, message)
+
+
+    elif conclusion.total_against >= Config.VOTE_LIMIT:
+        conclusion.status = ConclusionStatus.REJECTED
+        conclusion.prediction.status = PredictionStatus.PENDING
+
+    db.session.commit()
+
+    return jsonify({
+        'message': 'Bet conclusion vote successfully updated',
+        'id': vote.id,
+        'data': {'vote': vote.vote, 'status': vote.conclusion.status.value}
     }), 200
 
 @bp.route('/api/predictions', methods=['POST'])

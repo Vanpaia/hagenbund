@@ -55,6 +55,7 @@ class User(UserMixin, db.Model):
     achievements = db.relationship("UserAchievement", back_populates="user")
     stockpicks = db.relationship("StockPick", back_populates="user")
     predictions = db.relationship("Prediction", back_populates="author")
+    bets = db.relationship("Bet", back_populates="author")
 
     @hybrid_property
     def total_investment(self) -> int:
@@ -162,6 +163,117 @@ class UserAchievement(db.Model):
     # Relationships to make querying easier
     user = db.relationship("User", back_populates="achievements")
     achievement = db.relationship("Achievement", back_populates="users")
+
+class BetVote(db.Model):
+    __tablename__ = "bet_vote"
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    bet_id = db.Column(db.Integer, db.ForeignKey("bet.id"), nullable=False)
+    vote = db.Column(db.Boolean, nullable=False)
+    created_at = db.Column(db.DateTime, default= lambda: datetime.now(timezone.utc))
+
+    bet = db.relationship("Bet", back_populates="votes")
+
+class Bet(db.Model):
+    __tablename__ = "bet"
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    title = db.Column(db.String(256), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default= lambda: datetime.now(timezone.utc))
+    vote_until = db.Column(db.DateTime)
+    status = db.Column(db.Enum(PredictionStatus), default=PredictionStatus.PENDING)
+
+    author = db.relationship("User", back_populates="bets")
+    conclusions = db.relationship("BetConclusion", back_populates="bet", cascade="all, delete-orphan")
+    votes = db.relationship("BetVote", back_populates="bet", cascade="all, delete-orphan")
+    
+
+    def to_dict(self):
+        formatted_date = self.created_at.isoformat() if self.created_at else None
+        formatted_open_date = self.vote_until.isoformat() if self.vote_until else None
+        content = {"title": self.title,
+                   "id": self.id,
+                   "description": self.description,
+                   "user_id": self.user_id,
+                   "author": self.author.user_name,
+                   "created_at": formatted_date,
+                   "vote_until": formatted_open_date}
+        return content
+
+    @hybrid_property
+    def total_in_favour(self) -> int:
+        return sum(1 for v in self.votes if v.vote is True)
+
+    @hybrid_property
+    def total_against(self) -> int:
+        return sum(1 for v in self.votes if v.vote is False)
+
+    def get_user_vote(self, user_id) -> BetVote | None:
+        return BetVote.query.filter_by(
+            bet_id=self.id, user_id=user_id
+        ).first()
+
+class BetConclusionVote(db.Model):
+    __tablename__ = "bet_conclusion_vote"
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    bet_conclusion_id = db.Column(db.Integer, db.ForeignKey("bet_conclusion.id"), nullable=False)
+    vote = db.Column(db.Boolean, nullable=False)
+    created_at = db.Column(db.DateTime, default= lambda: datetime.now(timezone.utc))
+
+    conclusion = db.relationship("BetConclusion", back_populates="votes")
+
+    __table_args__ = (
+            db.UniqueConstraint('user_id', 'bet_conclusion_id', name='_user_bet_conclusion_uc'),
+        )
+
+class BetConclusion(db.Model):
+    __tablename__ = "bet_conclusion"
+    id = db.Column(db.Integer, primary_key=True)
+    bet_id = db.Column(db.Integer, db.ForeignKey("bet.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    created_at = db.Column(db.DateTime, default= lambda: datetime.now(timezone.utc))
+    description = db.Column(db.Text, nullable=False)
+    url = db.Column(db.Text, nullable=True)
+    outcome = db.Column(db.Enum(ConclusionOutcome))
+    status = db.Column(db.Enum(ConclusionStatus), nullable=False, default=ConclusionStatus.ACTIVE)
+
+    votes = db.relationship("BetConclusionVote", back_populates="conclusion", cascade="all, delete-orphan")
+    bet = db.relationship("Bet", back_populates="conclusions")
+
+    def to_dict(self):
+        formatted_date = self.created_at.isoformat() if self.created_at else None
+        content = {"id": self.id,
+                   "description": self.description,
+                   "url": self.url,
+                   "user_id": self.user_id,
+                   "outcome": self.outcome.value,
+                   "status": self.status.value,
+                   "created_at": formatted_date}
+        return content
+
+    @hybrid_property
+    def total_in_favour(self) -> int:
+        return sum(1 for v in self.votes if v.vote is True)
+
+    @hybrid_property
+    def total_against(self) -> int:
+        return sum(1 for v in self.votes if v.vote is False)
+
+    def get_user_vote(self, user_id) -> BetConclusionVote | None:
+        return BetConclusionVote.query.filter_by(
+            bet_conclusion_id=self.id, user_id=user_id
+        ).first()
+
+class BeerLedger(db.Model):
+    __tablename__ = "beer_ledger"
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    amount = db.Column(db.Integer, nullable=False)
+    bet_id = db.Column(db.Integer, db.ForeignKey("bet.id"), nullable=True)
+    reason = db.Column(db.String(128))
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
 class Prediction(db.Model):
     __tablename__ = "prediction"

@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <!-- Main Content -->
+  <div class="main-content">
+    <section class="hero is-hero-bar">
+      <div class="hero-body">
+        <div class="container has-text-centered">
+          <div class="grid">
+            <div class="cell">
+            </div>
+            <div class="cell">
+              <div class="block">
+                <h1 class="title">
+                  Gentleboy 🍻 Bets
+                </h1>
+              </div>
+              <button class="button is-big is-primary mt-2 open-bet-modal">New Bet</button>
+            </div>
+            <div class="cell">
+            </div>
+          </div>
+        </div>
+
+        {% if bets %}
+        <div class="container has-text-centered">
+          <div class="grid">
+            <div class="cell">
+              <div class="card">
+                <div class="card-content has-text-centered">
+                  <div class="is-widget-icon">
+                    <span class="icon has-text-primary is-large">
+                      <span class="material-symbols-outlined" style="font-size: 48px;">
+                        sports_bar
+                      </span>
+                    </span>
+                  </div>
+                  <div class="is-widget-label">
+                    <h2 class="subtitle is-spaced">Current Bets</h2>
+                    {% for bet in bets%}
+                      <div id="{{ bet.id }}" class="card">
+                        <div class="columns">
+                          <div class="column is-two-fifths">
+                            <p>{{ bet.title }}</p>
+                            {% if bet.description %}
+                            <p> {{ bet.description }}<p>
+                            {% endif %}
+                          </div>
+                          <div class="column is-two-fifths">
+                            <progress id="{{ bet.id }}-success" class="progress is-primary reading-tracher-fixed" value="{{ bet.total_in_favour }}" max="6"></progress>
+                            <progress id="{{ bet.id }}-failure" class="progress is-danger reading-tracher-fixed" value="{{ bet.total_against }}" max="6"></progress>
+                          </div>
+                          <div class="column is-one-fifths">
+                            {% if bet.vote_until > today %}
+                            {% set user_vote = bet.get_user_vote(current_user.id) %}
+                            <button class="button is-small mt-2 bet-vote-btn {% if user_vote and user_vote.vote == False %}is-danger{% else %}is-light{% endif %}"
+                                    data-conclusion-id="{{ bet.id }}"
+                                    data-vote-id="{{ user_vote.id if user_vote else '' }}"
+                                    data-vote="false">
+                              Disagree
+                            </button>
+                            <button class="button is-small mt-2 bet-vote-btn {% if user_vote and user_vote.vote == True %}is-primary{% else %}is-light{% endif %}"
+                                    data-conclusion-id="{{ bet.id }}"
+                                    data-vote-id="{{ user_vote.id if user_vote else '' }}"
+                                    data-vote="true">
+                              Agree
+                            </button>
+                            {% elif bet.author.id == current_user.id %}
+                              <button class="button is-small is-primary mt-2 open-conclusion-modal" data-bet-id="{{ bet.id }}">Conclude</button>
+                            {% endif %}
+                          </div>
+                        </div>
+                      </div>
+                    {% endfor %}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </section>
+    <section class="section is-main-section">
+      <div class="container has-text-centered">
+        <div class="grid">
+          <div class="cell">
+          </div>
+          <div class="cell">
+            <div class="block">
+              <h1 class="title">
+                Total Possible Points
+              </h1>
+              <br>
+            </div>
+          </div>
+          <div class="cell">
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Modals -->
+  <div id="betModal" class="modal">
+    <div class="modal-background"></div>
+    <div class="modal-card">
+      <header class="modal-card-head">
+        <p class="modal-card-title">New 🍻 Bet </p>
+        <button class="delete" aria-label="close" id="closeBetModal"></button>
+      </header>
+      <section class="modal-card-body">
+
+        <div class="field">
+          <label class="label">Title</label>
+          <div class="control">
+            <textarea class="textarea" id="betTitle" 
+                      placeholder="Short bet title..." 
+                      rows="1"></textarea>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label">Description</label>
+          <div class="control">
+            <textarea class="textarea" id="betDescription" 
+                      placeholder="Describe the details of this bet..." 
+                      rows="3"></textarea>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label">Accepting bets for<span class="has-text-grey is-size-7">(optional)</span></label>
+          <div class="field is-grouped">
+            
+            <div class="control is-expanded">
+              <div class="field has-addons">
+                <p class="control"><input class="input" type="number" id="openDays" placeholder="0"></p>
+                <p class="control"><a class="button is-static">days</a></p>
+              </div>
+            </div>
+
+            <div class="control is-expanded">
+              <div class="field has-addons">
+                <p class="control"><input class="input" type="number" id="openHours" placeholder="1"></p>
+                <p class="control"><a class="button is-static">hours</a></p>
+              </div>
+            </div>
+
+            <div class="control is-expanded">
+              <div class="field has-addons">
+                <p class="control"><input class="input" type="number" id="openMinutes" placeholder="0"></p>
+                <p class="control"><a class="button is-static">mins</a></p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </section>
+      <footer class="modal-card-foot">
+        <button class="button is-primary" id="submitBet">Submit</button>
+        <button class="button" id="cancelBetModal">Cancel</button>
+      </footer>
+    </div>
+  </div>
+
+  <div id="conclusionModal" class="modal">
+    <div class="modal-background"></div>
+    <div class="modal-card">
+      <header class="modal-card-head">
+        <p class="modal-card-title">Submit Conclusion</p>
+        <button class="delete" aria-label="close" id="closeConclusionModal"></button>
+      </header>
+      <section class="modal-card-body">
+        <input type="hidden" id="conclusionBetId">
+
+        <div class="field">
+          <label class="label">Outcome</label>
+          <div class="control">
+            <div class="select is-fullwidth">
+              <select id="conclusionOutcome">
+                <option value="SUCCESS">Succeeded</option>
+                <option value="FAILED">Failed</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label">Description</label>
+          <div class="control">
+            <textarea class="textarea" id="conclusionDescription" 
+                      placeholder="Describe why this prediction succeeded or failed..." 
+                      rows="3"></textarea>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label">Supporting URL <span class="has-text-grey is-size-7">(optional)</span></label>
+          <div class="control">
+            <input class="input" type="url" id="conclusionUrl" placeholder="https://...">
+          </div>
+        </div>
+
+      </section>
+      <footer class="modal-card-foot">
+        <button class="button is-primary" id="submitConclusion">Submit</button>
+        <button class="button" id="cancelConclusionModal">Cancel</button>
+      </footer>
+    </div>
+  </div>
+
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/bets.js') }}"></script>
+{% endblock %}
