@@ -74,6 +74,7 @@ document.getElementById("submitBet").addEventListener("click", async () => {
 document
   .getElementById("submitConclusion")
   .addEventListener("click", async () => {
+    const bet_id = document.getElementById("conclusionBetId").value.trim();
     const outcome = document.getElementById("conclusionOutcome").value.trim();
     const description = document
       .getElementById("conclusionDescription")
@@ -88,7 +89,7 @@ document
     const response = await fetch("/api/bet-conclusion", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ outcome, description, url: url || null }),
+      body: JSON.stringify({ bet_id, outcome, description, url: url || null }),
     });
 
     const data = await response.json();
