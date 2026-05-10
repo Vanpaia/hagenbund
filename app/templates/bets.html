@@ -41,7 +41,7 @@
                 <div class="is-widget-label">
                   <h2 class="subtitle is-spaced">Current Bets</h2>
                   {% for bet in bets%}
-                    <div id="{{ bet.id }}" class="card">
+                    <div id="bet_{{ bet.id }}" class="card">
                       <div class="columns">
                         <div class="column is-two-fifths">
                           <p>{{ bet.title }}</p>
@@ -50,8 +50,8 @@
                           {% endif %}
                         </div>
                         <div class="column is-two-fifths">
-                          <progress id="{{ bet.id }}-success" class="progress is-primary reading-tracher-fixed" value="{{ bet.total_in_favour }}" max="6">🍺</progress>
-                          <progress id="{{ bet.id }}-failure" class="progress is-danger reading-tracher-fixed" value="{{ bet.total_against }}" max="6">🍺</progress>
+                          <progress id="bet_{{ bet.id }}-success" class="progress is-primary reading-tracher-fixed" value="{{ bet.total_in_favour }}" max="6">🍺</progress>
+                          <progress id="bet_{{ bet.id }}-failure" class="progress is-danger reading-tracher-fixed" value="{{ bet.total_against }}" max="6">🍺</progress>
                         </div>
                         <div class="column is-one-fifths">
                           {% if bet.vote_until > today %}
@@ -82,24 +82,229 @@
         </div>
       </div>
       {% endif %}
-
+      {% if conclusions %}
       <div class="container has-text-centered">
         <div class="grid">
           <div class="cell">
-          </div>
-          <div class="cell">
-            <div class="block">
-              <h1 class="title">
-                Total Possible Points
-              </h1>
-              <br>
+            <div class="card">
+              <div class="card-content has-text-centered">
+                <div class="is-widget-icon">
+                  <span class="icon has-text-primary is-large">
+                    <span class="material-symbols-outlined" style="font-size: 48px;">
+                      how_to_vote
+                    </span>
+                  </span>
+                </div>
+                <div class="is-widget-label">
+                  <h2 class="subtitle is-spaced">Current Bet Conclusions</h2>
+                  {% for conclusion in conclusions %}
+                    <div id="conclusion_{{ conclusion.id }}" class="card">
+                      <div class="columns">
+                        <div class="column is-one-fifths">
+                          <p>{{ conclusion.bet.title }}</p>
+                          {% if conclusion.bet.description %}
+                          <p> {{ conclusion.bet.description }}<p>
+                          {% endif %}
+                        </div>
+                        <div class="column is-two-fifths">
+                          <p>{{ conclusion.description }}</p>
+                          {% if conclusion.url %}
+                          <a href={{conclusion.url}}>Link</a>
+                          {% endif %}
+                        </div>
+                        <div class="column is-one-fifths">
+                          <progress id="conclusion_{{ conclusion.id }}-success" class="progress is-primary reading-tracher-fixed" value="{{ conclusion.total_in_favour }}" max="3"></progress>
+                          <progress id="conclusion_{{ conclusion.id }}-failure" class="progress is-danger reading-tracher-fixed" value="{{ conclusion.total_against }}" max="3"></progress>
+                        </div>
+                        <div class="column is-one-fifths">
+                          {% set user_vote = conclusion.get_user_vote(current_user.id) %}
+                          
+                          <button class="button is-small mt-2 conclusion-vote-btn {% if user_vote and user_vote.vote == False %}is-danger{% else %}is-light{% endif %}"
+                                  data-conclusion-id="{{ conclusion.id }}"
+                                  data-vote-id="{{ user_vote.id if user_vote else '' }}"
+                                  data-vote="false">
+                            Disagree
+                          </button>
+                          <button class="button is-small mt-2 conclusion-vote-btn {% if user_vote and user_vote.vote == True %}is-primary{% else %}is-light{% endif %}"
+                                  data-conclusion-id="{{ conclusion.id }}"
+                                  data-vote-id="{{ user_vote.id if user_vote else '' }}"
+                                  data-vote="true">
+                            Agree
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
             </div>
-          </div>
-          <div class="cell">
           </div>
         </div>
       </div>
-    </section>
+      {% endif %}
+      <div class="container has-text-centered">
+        <div class="grid">
+          <div class="cell">
+            <div class="card">
+              <div class="card-content has-text-centered">
+                <div class="is-widget-icon">
+                  <span class="icon has-text-primary is-large">
+                    <span class="material-symbols-outlined" style="font-size: 48px;">
+                      account_balance_wallet
+                    </span>
+                  </span>
+                </div>
+                <button class="button is-medium is-primary mt-2 open-payment-modal">Payment</button>
+                <div class="is-widget-label">
+                  <h2 class="subtitle is-spaced">Current Balance</h2>
+                </div>
+                  {% for boy in gentleboys %}
+                  <div id="boy_{{ boy.id }}" class="card">
+                    <div class="columns">
+                      <div class="column is-one-fifths">
+                        <p>{{ boy.user_name }}</p>
+                      </div>
+                      <div class="column is-two-fifths">
+                        <p>{{ boy.total_beer_credit }} / {{ boy.total_beer_debit }}</p>
+                      </div>
+                      <div class="column is-two-fifths">
+                        <p>{{ boy.total_beer_balance}}</p>
+                      </div>
+                    </div>
+                  </div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+  <!-- Modals -->
+  <div id="betModal" class="modal">
+    <div class="modal-background"></div>
+    <div class="modal-card">
+      <header class="modal-card-head">
+        <p class="modal-card-title">New 🍻 Bet </p>
+        <button class="delete" aria-label="close" id="closeBetModal"></button>
+      </header>
+      <section class="modal-card-body">
+
+        <div class="field">
+          <label class="label">Title</label>
+          <div class="control">
+            <textarea class="textarea" id="betTitle" 
+                      placeholder="Short bet title..." 
+                      rows="1"></textarea>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label">Description</label>
+          <div class="control">
+            <textarea class="textarea" id="betDescription" 
+                      placeholder="Describe the details of this bet..." 
+                      rows="3"></textarea>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label">Accepting bets for<span class="has-text-grey is-size-7">(optional)</span></label>
+          <div class="field is-grouped">
+            
+            <div class="control is-expanded">
+              <div class="field has-addons">
+                <p class="control"><input class="input" type="number" id="openDays" placeholder="0"></p>
+                <p class="control"><a class="button is-static">days</a></p>
+              </div>
+            </div>
+
+            <div class="control is-expanded">
+              <div class="field has-addons">
+                <p class="control"><input class="input" type="number" id="openHours" placeholder="1"></p>
+                <p class="control"><a class="button is-static">hours</a></p>
+              </div>
+            </div>
+
+            <div class="control is-expanded">
+              <div class="field has-addons">
+                <p class="control"><input class="input" type="number" id="openMinutes" placeholder="0"></p>
+                <p class="control"><a class="button is-static">mins</a></p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </section>
+      <footer class="modal-card-foot">
+        <button class="button is-primary" id="submitBet">Submit</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Modals -->
+  <div id="betModal" class="modal">
+    <div class="modal-background"></div>
+    <div class="modal-card">
+      <header class="modal-card-head">
+        <p class="modal-card-title">New 🍻 Bet </p>
+        <button class="delete" aria-label="close" id="closeBetModal"></button>
+      </header>
+      <section class="modal-card-body">
+
+        <div class="field">
+          <label class="label">Title</label>
+          <div class="control">
+            <textarea class="textarea" id="betTitle" 
+                      placeholder="Short bet title..." 
+                      rows="1"></textarea>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label">Description</label>
+          <div class="control">
+            <textarea class="textarea" id="betDescription" 
+                      placeholder="Describe the details of this bet..." 
+                      rows="3"></textarea>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label">Accepting bets for<span class="has-text-grey is-size-7">(optional)</span></label>
+          <div class="field is-grouped">
+            
+            <div class="control is-expanded">
+              <div class="field has-addons">
+                <p class="control"><input class="input" type="number" id="openDays" placeholder="0"></p>
+                <p class="control"><a class="button is-static">days</a></p>
+              </div>
+            </div>
+
+            <div class="control is-expanded">
+              <div class="field has-addons">
+                <p class="control"><input class="input" type="number" id="openHours" placeholder="1"></p>
+                <p class="control"><a class="button is-static">hours</a></p>
+              </div>
+            </div>
+
+            <div class="control is-expanded">
+              <div class="field has-addons">
+                <p class="control"><input class="input" type="number" id="openMinutes" placeholder="0"></p>
+                <p class="control"><a class="button is-static">mins</a></p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </section>
+      <footer class="modal-card-foot">
+        <button class="button is-primary" id="submitBet">Submit</button>
+      </footer>
+    </div>
   </div>
 
   <!-- Modals -->
@@ -212,8 +417,42 @@
     </div>
   </div>
 
-  {% endblock %}
+<div id="paymentModal" class="modal">
+  <div class="modal-background"></div>
+  <div class="modal-card">
+    <header class="modal-card-head">
+      <p class="modal-card-title">Beer Bet Settlement</p>
+      <button class="delete" aria-label="close" id="closePaymentModal"></button>
+    </header>
+    <section class="modal-card-body">
+      <label class="label">Gentleboys receiving a beer from you:</label>
+      {% for boy in gentleboys %}
+      {% if not boy.id == current_user.id %}
+      <div class="field has-addons">
+        <p class="control"><input class="input beer-value" type="number" id="beer_{{ boy.id }}" data-id="{{ boy.id }}" placeholder="0"></p>
+        <p class="control"><a class="button is-static">{{ boy.user_name }}</a></p>
+      </div>
+      {% endif %}
+      {% endfor %}
 
-  {% block scripts %}
+      <div class="field">
+        <label class="label">Description <span class="has-text-grey is-size-7">(optional)</span></label>
+        <div class="control">
+          <textarea class="textarea" id="paymentDescription" 
+                    placeholder="Add a description for this settlement..." 
+                    rows="3"></textarea>
+        </div>
+      </div>
+
+    </section>
+    <footer class="modal-card-foot">
+      <button class="button is-primary" id="submitPayment">Submit</button>
+      <button class="button" id="cancelPaymentModal">Cancel</button>
+    </footer>
+  </div>
+
+{% endblock %}
+
+{% block scripts %}
   <script src="{{ url_for('static', filename='js/bets.js') }}"></script>
-  {% endblock %}
+{% endblock %}

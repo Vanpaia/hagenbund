@@ -1,3 +1,4 @@
+from re import S
 from flask import jsonify, render_template, request, redirect, url_for, current_app
 from flask_login import login_required, current_user
 from app import db
@@ -5,7 +6,7 @@ import app
 from config import Config
 from .. import socketio
 from app.main import bp
-from app.models import Prediction, Category, PredictionConclusion, PredictionConclusionVote, PredictionStatus, User, StockPick, StockUpdate, PredictionVote, UserAchievement, ConclusionOutcome, ConclusionStatus, Bet, BetVote, BetConclusion, BetConclusionVote
+from app.models import BeerLedger, Prediction, Category, PredictionConclusion, PredictionConclusionVote, PredictionStatus, User, StockPick, StockUpdate, PredictionVote, UserAchievement, ConclusionOutcome, ConclusionStatus, Bet, BetVote, BetConclusion, BetConclusionVote
 from app.utils.stocks import search_stock_ticker, get_stock_info
 from app.utils.signal import send_signal_message
 from app.achievements import set_achievement
@@ -67,15 +68,14 @@ def profile(name):
 @login_required
 def bets():
     now_aware = datetime.now(timezone.utc)
-    print(now_aware)
     now_naive = now_aware.replace(tzinfo=None)
-    print(now_naive)
+
     bets = Bet.query.filter_by(status=PredictionStatus.PENDING).all()
+    conclusions = BetConclusion.query.filter_by(status=ConclusionStatus.ACTIVE).all()
 
-    for x in bets:
-        print(x.title, x.vote_until)
+    gentleboys = User.query.all()
 
-    return render_template('bets.html', bets=bets, today=now_naive)
+    return render_template('bets.html', bets=bets, conclusions=conclusions, today=now_naive, gentleboys=gentleboys)
 
 @bp.route('/stock/<symbol>', methods=['GET'])
 @login_required
@@ -100,6 +100,99 @@ def search_stocks():
     return jsonify({
         'message': 'Stock search sucessful',
         'data': result
+    }), 200
+
+@login_required
+@bp.route('/api/beer', methods=['POST'])
+def create_beer_transaction():
+    """Create a new beer transaction"""
+    data = request.get_json()
+
+    required_fields = ['creditor_id', 'amount']
+    for field in required_fields:
+        if field not in data:
+            return jsonify({'error': f'Missing required field: {field}'}), 400
+
+    bet_id = data.get("bet_id")
+    bet_id = None if bet_id == None else int(bet_id)
+
+    reason = entry.get('reason', '').strip() or None
+
+    ledger_entry = BeerLedger(debtor_id=data.get("debitor_id", current_user.id), creditor_id=data.get("creditor_id"), amount=float(data.get("amount")), bet_id=bet_id, reason=reason)
+    db.session.add(ledger_entry)
+    db.session.commit()
+
+    return jsonify({
+        'message': 'Ledger entry successfully created',
+        'id': ledger_entry.id,
+        'data': ledger_entry.to_dict()
+    }), 200
+
+@login_required
+@bp.route('/api/beer/bulk', methods=['POST'])
+def create_bulk_beer_transaction():
+    """Create bulk beer transactions"""
+    data = request.get_json()
+    try:
+        ids = []
+        ledger_data = []
+
+        for i, entry in enumerate(data["data"]):
+            required_fields = ['creditor_id', 'amount']
+            for field in required_fields:
+                if field not in entry:
+                    return jsonify({'error': f'Missing required field: {field} in {i}'}), 400
+
+
+            bet_id = entry.get("bet_id")
+            bet_id = None if bet_id == None else int(bet_id)
+
+            reason = entry.get('reason', '').strip() or None
+
+            ledger_entry = BeerLedger(debtor_id=entry.get("debitor_id", current_user.id), creditor_id=entry.get("creditor_id"), amount=float(entry.get("amount")), bet_id=bet_id, reason=reason)
+            db.session.add(ledger_entry)
+            db.session.flush()
+            ids.append(ledger_entry.id)
+            ledger_data.append(ledger_entry.to_dict())
+
+        db.session.commit()
+
+        return jsonify({
+            'message': 'Ledger entries successfully created',
+            'id': ids,
+            'data': ledger_data
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+
+        return jsonify({'error': f'{e}'}), 400
+
+
+
+@login_required
+@bp.route('/api/beer', methods=['GET'])
+def fetch_beer_transaction():
+    """Fetch a beer transaction"""
+
+    #Pulling the data from the URL for further use
+    user = current_user
+
+    beers_debit = BeerLedger.query.filter_by(debitor_id=user.id).all()
+    beers_credit = BeerLedger.query.filter_by(creditor_id=user.id).all()
+    data = {"total": {"debit": 0, "credit":0}, "debit":[], "credit":[]}
+    for x in beers_debit:
+        data.debit.append(x.to_dict())
+        data.total.debit += x.amount
+
+    for x in beers_credit:
+        data.credit.append(x.to_dict())
+        data.total.credit += x.amount
+
+    return jsonify({
+        'message': 'Search successfull',
+        'id': None,
+        'data': data
     }), 200
 
 @bp.route('/api/bets', methods=['POST'])
@@ -278,7 +371,7 @@ def create_bet_conclusion():
 
 
     existing = BetConclusion.query.filter_by(
-        prediction_id=data["bet_id"], status=ConclusionStatus.ACTIVE
+        bet_id=data["bet_id"], status=ConclusionStatus.ACTIVE
     ).first()
     if existing:
         return jsonify({'error': 'An active conclusion already exists'}), 409
@@ -287,8 +380,8 @@ def create_bet_conclusion():
         outcome = ConclusionOutcome[data.get("outcome")]
     except KeyError:
         return jsonify({'error': 'Invalid outcome value'}), 400
-
-    conclusion = BetConclusion(prediction_id=data.get("bet_id"), user_id=data.get("user_id", current_user.id), description=data.get("description"), url=data.get("url"), outcome=outcome)
+    
+    conclusion = BetConclusion(bet_id=data.get("bet_id"), user_id=data.get("user_id", current_user.id), description=data.get("description"), url=data.get("url"), outcome=outcome)
     db.session.add(conclusion)
     db.session.flush()
 
@@ -298,6 +391,12 @@ def create_bet_conclusion():
     conclusion.bet.status = PredictionStatus.VOTING
 
     db.session.commit()
+
+    return jsonify({
+        'message': 'Bet conclusion successfully created',
+        'id': conclusion.id,
+        'data': {'conclusion': conclusion.to_dict(), 'vote': vote.vote}
+    }), 201
 
 @bp.route('/api/bet-conclusion', methods=['GET'])
 @login_required
@@ -380,11 +479,29 @@ def create_bet_conclusion_vote():
     
     if conclusion.total_in_favour >= Config.VOTE_LIMIT:
 
-        conclusion.prediction.status = PredictionStatus(conclusion.outcome.value)
+        conclusion.bet.status = PredictionStatus(conclusion.outcome.value)
         conclusion.status = ConclusionStatus.ACCEPTED
+        winnings = 0.0
+        if conclusion.outcome == ConclusionOutcome.SUCCESS:
+            winnings += conclusion.bet.odds_against
+        elif conclusion.outcome == ConclusionOutcome.FAILED:
+            winnings += conclusion.bet.odds_in_favour
 
-        message = f'Bet conclusion: {conclusion.outcome.value.upper()}!\n\n{conclusion.bet.author.user_name} made a bet { conclusion.bet.status.sentence() }. The bet was: {conclusion.bet.title}.'
-        send_signal_message(Config.PHONE_NUMBER, Config.SIGNAL_GROUP, message)
+        losers = []
+        winners = []
+
+        for participant in conclusion.bet.votes:
+            if (conclusion.outcome == ConclusionOutcome.SUCCESS) and (participant.vote is True):
+                winners.append(participant.id)
+            elif (conclusion.outcome == ConclusionOutcome.FAILED) and (participant.vote is False):
+                winners.append(participant.id)
+            else:
+                losers.append(participant.id)
+            
+            for loser in losers:
+                for winner in winners:
+                    ledger_entry = BeerLedger(debtor_id=loser, creditor_id=winner, amount=float(winnings), bet_id=conclusion.bet.id, reason=f"Bet {conclusion.bet.id} - {conclusion.outcome} - {winnings} beer")
+                    db.session.add(ledger_entry)
 
     elif conclusion.total_against >= Config.VOTE_LIMIT:
         conclusion.status = ConclusionStatus.REJECTED
@@ -418,16 +535,33 @@ def update_bet_conclusion_vote(vote_id):
 
     
     if conclusion.total_in_favour >= Config.VOTE_LIMIT:
-        conclusion.prediction.status = PredictionStatus(conclusion.outcome.value)
+        conclusion.bet.status = PredictionStatus(conclusion.outcome.value)
         conclusion.status = ConclusionStatus.ACCEPTED
+        winnings = 0.0
+        if conclusion.outcome == ConclusionOutcome.SUCCESS:
+            winnings += conclusion.bet.odds_against
+        elif conclusion.outcome == ConclusionOutcome.FAILED:
+            winnings += conclusion.bet.odds_favour
 
-        message = f'Bet conclusion: {conclusion.outcome.value.upper()}!\n\n{conclusion.bet.author.user_name} made a bet { conclusion.bet.status.sentence() }. The bet was: {conclusion.bet.title}.'
-        send_signal_message(Config.PHONE_NUMBER, Config.SIGNAL_GROUP, message)
+        losers = []
+        winners = []
 
+        for participant in conclusion.bet.votes:
+            if (conclusion.outcome == ConclusionOutcome.SUCCESS) and (participant.vote is True):
+                winners.append(participant.id)
+            elif (conclusion.outcome == ConclusionOutcome.FAILED) and (participant.vote is False):
+                winners.append(participant.id)
+            else:
+                losers.append(participant.id)
+            
+            for loser in losers:
+                for winner in winners:
+                    ledger_entry = BeerLedger(debtor_id=loser, creditor_id=winner, amount=float(winnings), bet_id=conclusion.bet.id, reason=f"Bet {conclusion.bet.id} - {conclusion.outcome} - {winnings} beer")
+                    db.session.add(ledger_entry)
 
     elif conclusion.total_against >= Config.VOTE_LIMIT:
         conclusion.status = ConclusionStatus.REJECTED
-        conclusion.prediction.status = PredictionStatus.PENDING
+        conclusion.bet.status = PredictionStatus.PENDING
 
     db.session.commit()
 
@@ -1005,4 +1139,29 @@ def toggle_flag():
         'message': 'Feature flag succesfully toggled',
         'id': None,
         'data': app.feature_flag,
+    }), 200
+
+
+@bp.route('/api/info', methods=['GET'])
+def get_info():
+    """Get standing info"""
+
+    users = User.query.all()
+    investments= sorted(users, key=lambda g: g.total_investment, reverse=True)
+    predictions= sorted(users, key=lambda g: g.total_outstanding_points, reverse=True)
+    predictions= sorted(predictions, key=lambda g: g.total_achieved_points, reverse=True)
+    best_stock = StockPick.highest_return()
+    worst_stock = StockPick.lowest_return()
+
+    data = {
+            "investments": [{"name": x.user_name, "rank": i, "total": x.total_investment} for i,x in enumerate(investments, 1)],
+            "best_stock": {"name": best_stock.name, "total": best_stock.total_return},
+            "worst_stock": {"name": worst_stock.name, "total": worst_stock.total_return},
+            "predictions": [{"name": x.user_name,"rank": i, "total": {"achieved": x.total_achieved_points, "failed": x.total_failed_points, "outstanding":x.total_outstanding_points}} for i, x in enumerate(predictions, 1)],
+    }
+
+
+    return jsonify({
+        'message': '',
+        'data': data,
     }), 200

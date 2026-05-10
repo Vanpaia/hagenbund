@@ -56,6 +56,43 @@ class User(UserMixin, db.Model):
     stockpicks = db.relationship("StockPick", back_populates="user")
     predictions = db.relationship("Prediction", back_populates="author")
     bets = db.relationship("Bet", back_populates="author")
+    debit_entries = db.relationship(
+        "BeerLedger", 
+        foreign_keys="[BeerLedger.debtor_id]", 
+        back_populates="debtor"
+    )
+    credit_entries = db.relationship(
+        "BeerLedger", 
+        foreign_keys="[BeerLedger.creditor_id]", 
+        back_populates="creditor"
+    )
+    @hybrid_property
+    def total_beer_debit(self) -> float:
+        return sum(p.amount for p in self.debit_entries)
+
+    @total_beer_debit.expression
+    def total_beer_debit(cls):
+        return (
+            select(func.coalesce(func.sum(BeerLedger.amount), 0))
+            .where(BeerLedger.debtor_id == cls.id)
+            .label("total_debit")
+        )
+
+    @hybrid_property
+    def total_beer_credit(self) -> float:
+        return sum(p.amount for p in self.credit_entries)
+
+    @total_beer_credit.expression
+    def total_beer_credit(cls):
+        return (
+            select(func.coalesce(func.sum(BeerLedger.amount), 0))
+            .where(BeerLedger.creditor_id == cls.id)
+            .label("total_credit")
+        )
+
+    @hybrid_property
+    def total_beer_balance(self) -> float:
+        return self.total_beer_credit - self.total_beer_debit
 
     @hybrid_property
     def total_investment(self) -> int:
@@ -187,7 +224,7 @@ class Bet(db.Model):
     author = db.relationship("User", back_populates="bets")
     conclusions = db.relationship("BetConclusion", back_populates="bet", cascade="all, delete-orphan")
     votes = db.relationship("BetVote", back_populates="bet", cascade="all, delete-orphan")
-    
+    settlement = db.relationship("BeerLedger", back_populates="bet", cascade="all, delete-orphan")
 
     def to_dict(self):
         formatted_date = self.created_at.isoformat() if self.created_at else None
@@ -202,12 +239,52 @@ class Bet(db.Model):
         return content
 
     @hybrid_property
+    def total_votes(self) -> int:
+        return len(self.votes)
+
+    @total_votes.expression
+    def total_votes(cls):
+        return (
+            select(func.count(BetVote.id))
+            .where(BetVote.bet_id == cls.id)
+            .label("total_votes")
+        )
+
+    @hybrid_property
     def total_in_favour(self) -> int:
         return sum(1 for v in self.votes if v.vote is True)
 
+    @total_in_favour.expression
+    def total_in_favour(cls):
+        return (
+            select(func.coalesce(func.sum(cast(BetVote.vote, Integer)), 0))
+            .where(BetVote.bet_id == cls.id)
+            .label("total_favour")
+        )
+
     @hybrid_property
     def total_against(self) -> int:
-        return sum(1 for v in self.votes if v.vote is False)
+        return (self.total_votes - self.total_in_favour)
+
+    @hybrid_property
+    def odds_favour(self) -> float:
+        if self.total_against == 0:
+            return float(self.total_in_favour)
+        return round(self.total_in_favour / self.total_against, 2)
+
+    @hybrid_property
+    def odds_against(self) -> float:
+        if self.total_in_favour == 0:
+            return float(self.total_against)
+        return round(self.total_against / self.total_in_favour, 2)
+
+    @hybrid_property
+    def odds_favour(self) -> int:
+        return (self.total_in_favour / self.total_against)
+
+    @hybrid_property
+    def odds_against(self) -> int:
+        return (self.total_against / self.total_in_favour)
 
     def get_user_vote(self, user_id) -> BetVote | None:
         return BetVote.query.filter_by(
@@ -269,11 +346,35 @@ class BetConclusion(db.Model):
 class BeerLedger(db.Model):
     __tablename__ = "beer_ledger"
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    amount = db.Column(db.Integer, nullable=False)
+    debtor_id = db.Column(db.Integer, db.ForeignKey("user.id", name="fk_beer_ledger_debtor"), nullable=False)
+    creditor_id = db.Column(db.Integer, db.ForeignKey("user.id", name="fk_beer_ledger_creditor"), nullable=False)
+    amount = db.Column(db.Float, nullable=False)
     bet_id = db.Column(db.Integer, db.ForeignKey("bet.id"), nullable=True)
-    reason = db.Column(db.String(128))
+    reason = db.Column(db.String(128), nullable=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    bet = db.relationship("Bet", back_populates="settlement")
+    debtor = db.relationship(
+        "User", 
+        foreign_keys=[debtor_id], 
+        back_populates="debit_entries"
+    )
+    creditor = db.relationship(
+        "User", 
+        foreign_keys=[creditor_id], 
+        back_populates="credit_entries"
+    )
+
+    def to_dict(self):
+        formatted_date = self.created_at.isoformat() if self.created_at else None
+        content = {"amount": self.amount,
+                   "id": self.id,
+                   "bet": self.bet_id,
+                   "reason": self.reason,
+                   "debitor": self.debtor.user_name,
+                   "creditor": self.creditor.user_name,
+                   "created_at": formatted_date}
+        return content
 
 class Prediction(db.Model):
     __tablename__ = "prediction"

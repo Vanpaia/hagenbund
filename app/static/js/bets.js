@@ -1,5 +1,6 @@
 const betModal = document.getElementById("betModal");
 const conclusionModal = document.getElementById("conclusionModal");
+const paymentModal = document.getElementById("paymentModal");
 
 // Open modal and store bet id
 document.querySelectorAll(".open-conclusion-modal").forEach((btn) => {
@@ -16,16 +17,26 @@ document.querySelectorAll(".open-bet-modal").forEach((btn) => {
   });
 });
 
+// Open modal and store prediction id
+document.querySelectorAll(".open-payment-modal").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    paymentModal.classList.add("is-active");
+  });
+});
+
 // Close modal
 [
   "closeBetModal",
   "cancelBetModal",
   "closeConclusionModal",
   "cancelConclusionModal",
+  "closePaymentModal",
+  "cancelPaymentModal",
 ].forEach((id) => {
   document.getElementById(id).addEventListener("click", () => {
     betModal.classList.remove("is-active");
     conclusionModal.classList.remove("is-active");
+    paymentModal.classList.remove("is-active");
   });
 });
 document.querySelector(".modal-background").addEventListener("click", () => {
@@ -64,10 +75,10 @@ document.getElementById("submitBet").addEventListener("click", async () => {
     showNotification(data.error || "Something went wrong.", "is-danger");
     return;
   } else {
-    showNotification("Bet successfully submitted!", "is-success");
+    showNotification(data.message, "is-success");
   }
 
-  modal.classList.remove("is-active");
+  conclusionModal.classList.remove("is-active");
 });
 
 // Submit
@@ -98,11 +109,46 @@ document
       showNotification(data.error || "Something went wrong.", "is-danger");
       return;
     } else {
-      showNotification("Bet conclusion successfully submitted!", "is-success");
+      showNotification(data.message, "is-success");
     }
 
-    modal.classList.remove("is-active");
+    conclusionModal.classList.remove("is-active");
   });
+
+// Submit
+document.getElementById("submitPayment").addEventListener("click", async () => {
+  const beers = document.querySelectorAll(".beer-value");
+  const description = document
+    .getElementById("paymentDescription")
+    .value.trim();
+  const paymentData = [];
+  beers.forEach((input) => {
+    const id = parseFloat(input.dataset.id);
+    const value = parseFloat(input.value) || 0;
+    if (value > 0) {
+      paymentData.push({ creditor_id: id, amount: value, reason: description });
+    }
+  });
+
+  console.log(paymentData);
+
+  const response = await fetch("/api/beer/bulk", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ data: paymentData }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    showNotification(data.error || "Something went wrong.", "is-danger");
+    return;
+  } else {
+    showNotification(data.message, "is-success");
+  }
+
+  conclusionModal.classList.remove("is-active");
+});
 
 document.querySelectorAll(".bet-vote-btn").forEach((btn) => {
   btn.addEventListener("click", async () => {
@@ -135,8 +181,74 @@ document.querySelectorAll(".bet-vote-btn").forEach((btn) => {
 
     console.log(data);
 
-    const successProgress = document.getElementById(`${bet_id}-success`);
-    const failureProgress = document.getElementById(`${bet_id}-failure`);
+    const successProgress = document.getElementById(`bet_${bet_id}-success`);
+    const failureProgress = document.getElementById(`bet_${bet_id}-failure`);
+
+    if (vote == true) {
+      const successCount = parseInt(successProgress.value) + 1;
+      const failureCount = parseInt(failureProgress.value) - 1;
+      successProgress.value = successCount;
+      failureProgress.value = failureCount;
+    } else {
+      const successCount = parseInt(successProgress.value) - 1;
+      const failureCount = parseInt(failureProgress.value) + 1;
+      successProgress.value = successCount;
+      failureProgress.value = failureCount;
+    }
+
+    // Update vote_id on both buttons so future clicks know to PATCH
+    siblings.forEach((b) => {
+      b.dataset.voteId = data.id;
+      b.disabled = false;
+      b.classList.remove("is-primary", "is-danger");
+      b.classList.add("is-light");
+    });
+    btn.classList.remove("is-light");
+    btn.classList.add(vote ? "is-primary" : "is-danger");
+  });
+});
+
+document.querySelectorAll(".conclusion-vote-btn").forEach((btn) => {
+  btn.addEventListener("click", async () => {
+    const conclusion_id = btn.dataset.conclusionId;
+    const vote_id = btn.dataset.voteId;
+    const vote = btn.dataset.vote === "true";
+    const isUpdate = vote_id !== "";
+
+    const siblings = document.querySelectorAll(
+      `[data-conclusion-id="${conclusion_id}"]`,
+    );
+    siblings.forEach((b) => (b.disabled = true));
+
+    const response = await fetch(
+      isUpdate
+        ? `/api/bet-conclusion/vote/${vote_id}`
+        : "/api/bet-conclusion/vote",
+      {
+        method: isUpdate ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          isUpdate ? { vote } : { bet_conclusion_id: conclusion_id, vote },
+        ),
+      },
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      siblings.forEach((b) => (b.disabled = false));
+      alert(data.error || "Something went wrong.");
+      return;
+    }
+
+    console.log(data);
+
+    const successProgress = document.getElementById(
+      `conclusion_${conclusion_id}-success`,
+    );
+    const failureProgress = document.getElementById(
+      `conclusion_${conclusion_id}-failure`,
+    );
 
     if (vote == true) {
       const successCount = parseInt(successProgress.value) + 1;
