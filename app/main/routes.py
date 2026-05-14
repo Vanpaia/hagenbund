@@ -310,13 +310,17 @@ def create_bet_vote():
         if field not in data:
             return jsonify({'error': f'Missing required field: {field}'}), 400
 
-
     bet = Bet.query.filter_by(
         id=data["bet_id"]
     ).first()
 
     if not bet:
         return jsonify({'error': 'No active bet for this vote exists'}), 400   
+
+    now_aware = datetime.now(timezone.utc)
+    now_naive = now_aware.replace(tzinfo=None)
+    if now_naive > bet.vote_until:
+        return jsonify({'error': 'Forbidden: the time for voting has passed'}), 403
 
     existing = BetVote.query.filter_by(
         bet_id=data["bet_id"], user_id=user_id
@@ -345,6 +349,11 @@ def update_bet_vote(vote_id):
     if vote.user_id != current_user.id:
         return jsonify({'error': 'Unauthorized'}), 403
  
+    now_aware = datetime.now(timezone.utc)
+    now_naive = now_aware.replace(tzinfo=None)
+    if now_naive > vote.bet.vote_until:
+        return jsonify({'error': 'Forbidden: the time for voting has passed'}), 403
+
     # Update fields if provided
     if 'vote' in data:
         vote.vote= data['vote']
@@ -1142,9 +1151,9 @@ def toggle_flag():
     }), 200
 
 
-@bp.route('/api/info', methods=['GET'])
-def get_info():
-    """Get standing info"""
+@bp.route('/api/signal/info', methods=['GET'])
+def signal_get_info():
+    """Get standing info through signal"""
 
     users = User.query.all()
     investments= sorted(users, key=lambda g: g.total_investment, reverse=True)
@@ -1165,3 +1174,88 @@ def get_info():
         'message': '',
         'data': data,
     }), 200
+
+
+@bp.route('/api/signal/bets', methods=['POST'])
+def signal_create_bet():
+    """Create a new bet through signal"""
+    data = request.get_json()
+    print(data)
+
+    # Validate required fields
+    required_fields = ['title']
+    for field in required_fields:
+        if field not in data:
+            return jsonify({'error': f'Missing required field: {field}'}), 400
+
+    open_bets = Bet.query.filter(
+        Bet.user_id == (data.get("user_id") or current_user.id),
+        Bet.status.in_([PredictionStatus.PENDING, PredictionStatus.VOTING])
+    ).first()
+
+    if open_bets:
+        return jsonify({"error": "You already have an active bet!"}), 400
+
+    now = datetime.now(timezone.utc)
+    d = int(data.get("days") or 0)
+    h = int(data.get("hours") or 0)
+    m = int(data.get("minutes") or 0)
+
+    if d == 0 and h == 0 and m == 0:
+        h = 1
+
+    # 3. Create the timedelta
+    open_timedelta = timedelta(days=d, hours=h, minutes=m)   
+    vote_until = now + open_timedelta
+    print(vote_until)
+
+    bet = Bet(user_id=data.get("user_id", current_user.id), title=data.get("title"), description=data.get("description"), vote_until=vote_until)
+    db.session.add(bet)
+    db.session.commit()
+
+    return jsonify({
+        'message': 'Prediction successfully created',
+        'id': bet.id,
+        'data': bet.to_dict()
+    }), 200
+
+
+@bp.route('/api/signal/beer', methods=['POST'])
+def signal_create_bulk_beer_transaction():
+    """Create bulk beer transactions through signal"""
+    data = request.get_json()
+    try:
+        ids = []
+        ledger_data = []
+
+        for i, entry in enumerate(data["data"]):
+            required_fields = ['creditor_id', 'amount']
+            for field in required_fields:
+                if field not in entry:
+                    return jsonify({'error': f'Missing required field: {field} in {i}'}), 400
+
+
+            bet_id = entry.get("bet_id")
+            bet_id = None if bet_id == None else int(bet_id)
+
+            reason = entry.get('reason', '').strip() or None
+
+            ledger_entry = BeerLedger(debtor_id=entry.get("debitor_id", current_user.id), creditor_id=entry.get("creditor_id"), amount=float(entry.get("amount")), bet_id=bet_id, reason=reason)
+            db.session.add(ledger_entry)
+            db.session.flush()
+            ids.append(ledger_entry.id)
+            ledger_data.append(ledger_entry.to_dict())
+
+        db.session.commit()
+
+        return jsonify({
+            'message': 'Ledger entries successfully created',
+            'id': ids,
+            'data': ledger_data
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+
+        return jsonify({'error': f'{e}'}), 400
+
