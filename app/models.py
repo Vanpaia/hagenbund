@@ -21,6 +21,7 @@ class PredictionStatus(Enum):
     VOTING = "voting"
     SUCCESS = "success"
     FAILED = "failed"
+    CANCELLED = "cancelled"
 
     def sentence(self):
         return {
@@ -48,6 +49,7 @@ class User(UserMixin, db.Model):
     __tablename__ = "user"
     id = db.Column(db.Integer, primary_key=True)
     user_name = db.Column(db.String(64))
+    phone_no = db.Column(db.String(16))
     email = db.Column(db.String(256))
     password_hash = db.Column(db.String(64))
     is_admin = db.Column(db.Boolean, default=False)
@@ -277,14 +279,6 @@ class Bet(db.Model):
         if self.total_in_favour == 0:
             return float(self.total_against)
         return round(self.total_against / self.total_in_favour, 2)
-
-    @hybrid_property
-    def odds_favour(self) -> int:
-        return (self.total_in_favour / self.total_against)
-
-    @hybrid_property
-    def odds_against(self) -> int:
-        return (self.total_against / self.total_in_favour)
 
     def get_user_vote(self, user_id) -> BetVote | None:
         return BetVote.query.filter_by(

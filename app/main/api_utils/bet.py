@@ -1,106 +1,4 @@
-from re import S
-from flask import jsonify, render_template, request, redirect, url_for, current_app, abort
-from flask_login import login_required, current_user
-from app import db
-import app
-from config import Config
-from .. import socketio
-from app.main import bp
-from app.models import BeerLedger, Prediction, Category, PredictionConclusion, PredictionConclusionVote, PredictionStatus, User, StockPick, StockUpdate, PredictionVote, UserAchievement, ConclusionOutcome, ConclusionStatus, Bet, BetVote, BetConclusion, BetConclusionVote
-from app.utils.stocks import search_stock_ticker, get_stock_info
-from app.utils.signal import send_signal_message
-from app.achievements import set_achievement
 
-from sqlalchemy import func 
-from collections import defaultdict
-from datetime import datetime, timedelta, timezone, date
-
-
-@bp.route('/', methods=['GET'])
-@bp.route('/index', methods=['GET'])
-@login_required
-def index():
-    users = User.query.all()
-    investments= sorted(users, key=lambda g: g.total_investment, reverse=True)
-    predictions= sorted(users, key=lambda g: g.total_outstanding_points, reverse=True)
-    predictions= sorted(predictions, key=lambda g: g.total_achieved_points, reverse=True)
-    conclusions = PredictionConclusion.query.filter_by(status=ConclusionStatus.ACTIVE).all()
-    best_stock = StockPick.highest_return()
-    worst_stock = StockPick.lowest_return()
-
-    return render_template('index.html', title='Gentleboys Clubhouse', user=current_user, investments=investments, predictions=predictions, votes=conclusions, best_stock=best_stock, worst_stock=worst_stock)
-
-
-@bp.route('/chat', methods=['GET'])
-@login_required
-def chatroom():
-    return render_template('chatroom.html', title='Gentleboys Chatroom', user=current_user)
-
-@bp.route('/profile/<name>', methods=['GET'])
-@login_required
-def profile(name):
-    user = User.query.filter_by(user_name=name).first_or_404()
-    stockpicks = StockPick.query.filter_by(user_id=user.id).all()
-    achievements = UserAchievement.query.filter_by(user_id=user.id).all()
-    sorted_predictions = {}
-    total_points = 0 
-    total_likelihood = 0 
-    count = 0
-
-    for category in Category:
-        sorted_predictions[category.name] = Prediction.query.filter_by(
-            user_id=user.id, 
-            category=category.name
-        ).order_by(Prediction.position).all()
-        for x in sorted_predictions[category.name]:
-            if x.points:
-                total_points += (x.points * x.multiplier)
-            if x.likelihood:
-                total_likelihood += x.likelihood
-                count += 1
-    print(sorted_predictions)
-    if count > 0:
-        total_likelihood = float(total_likelihood/count)
-
-    return render_template('profile.html', user=user, predictions=sorted_predictions, stockpicks=stockpicks, achievements=achievements, total_points=total_points, total_likelihood=total_likelihood)
-
-@bp.route('/bets', methods=['GET'])
-@login_required
-def bets():
-    now_aware = datetime.now(timezone.utc)
-    now_naive = now_aware.replace(tzinfo=None)
-
-    bets = Bet.query.filter_by(status=PredictionStatus.PENDING).all()
-    conclusions = BetConclusion.query.filter_by(status=ConclusionStatus.ACTIVE).all()
-
-    gentleboys = User.query.all()
-
-    return render_template('bets.html', bets=bets, conclusions=conclusions, today=now_naive, gentleboys=gentleboys)
-
-@bp.route('/stock/<symbol>', methods=['GET'])
-@login_required
-def stock(symbol):
-    stock = StockPick.query.filter_by(symbol=symbol).first_or_404()
-    update = StockUpdate.query.filter_by(stock_id=stock.id).order_by(StockUpdate.created_at.desc()).first_or_404()
-
-    return render_template('stock.html', stock=stock, update=update)
-
-@bp.route('/api/stocks/search', methods=['POST'])
-def search_stocks():
-    """Search for a specific stock ticker using an external API"""
-    data = request.get_json()
-
-    # Validate required fields
-    required_fields = ['keywords']
-    for field in required_fields:
-        if field not in data:
-            return jsonify({'error': f'Missing required field: {field}'}), 400
-    result = search_stock_ticker(data.get("keywords"))
-
-    return jsonify({
-        'message': 'Stock search sucessful',
-        'data': result
-    }), 200
 
 @login_required
 @bp.route('/api/beer', methods=['POST'])
@@ -382,20 +280,8 @@ def create_bet_conclusion():
     existing = BetConclusion.query.filter_by(
         bet_id=data["bet_id"], status=ConclusionStatus.ACTIVE
     ).first()
-
     if existing:
         return jsonify({'error': 'An active conclusion already exists'}), 409
-
-    bet = Bet.query.filter_by(id=data["bet_id"]).first()
-
-    if not bet:
-        return jsonify({'error': 'No valid bet id'}), 409
-
-    if bet.total_against == 0 or bet.total_against == 0:
-        bet.status = PredictionStatus.CANCELLED
-        db.session.commit()
-        return jsonify({'error': 'No valid bet'}), 409
-        
 
     try:
         outcome = ConclusionOutcome[data.get("outcome")]
@@ -1115,6 +1001,28 @@ def fetch_stockpicks():
         'data': data
     }), 200
 
+@bp.route('/api/stockpicks/<int:stock_id>', methods=['PUT', 'PATCH'])
+def update_stockpicks(stock_id):
+    """Update an existing prediction"""
+    prediction = Prediction.query.get_or_404(prediction_id)
+    data = request.get_json()
+    
+    # Update fields if provided
+    if 'title' in data:
+        prediction.title = data['title']
+    if 'subtitle' in data:
+        prediction.description = data['description']
+    if 'category' in data:
+        prediction.category = Category[data['category']]
+    
+    db.session.commit()
+    
+    return jsonify({
+        'message': 'Prediction successfully updated',
+        'id': prediction.id,
+        'data': prediction.to_dict()
+    }), 200
+
 @bp.route('/api/stockpicks/<int:stock_id>', methods=['DELETE'])
 def delete_stockpick(stock_id):
     """Delete a prediction"""
@@ -1145,10 +1053,6 @@ def toggle_flag():
 def signal_get_info():
     """Get standing info through signal"""
 
-    # Double check: if it's not from localhost, kill the request
-    if request.remote_addr not in ['127.0.0.1', '::1']:
-        abort(403)
-
     users = User.query.all()
     investments= sorted(users, key=lambda g: g.total_investment, reverse=True)
     predictions= sorted(users, key=lambda g: g.total_outstanding_points, reverse=True)
@@ -1173,27 +1077,17 @@ def signal_get_info():
 @bp.route('/api/signal/bets', methods=['POST'])
 def signal_create_bet():
     """Create a new bet through signal"""
-
-    # Double check: if it's not from localhost, kill the request
-    if request.remote_addr not in ['127.0.0.1', '::1']:
-        abort(403)
-
     data = request.get_json()
+    print(data)
 
     # Validate required fields
-    required_fields = ['user_phone', 'title']
+    required_fields = ['title']
     for field in required_fields:
         if field not in data:
             return jsonify({'error': f'Missing required field: {field}'}), 400
 
-    print(data["user_phone"])
-
-    user = User.query.filter_by(phone_no=data["user_phone"]).first()
-
-    print(user.user_name)
-
     open_bets = Bet.query.filter(
-        Bet.user_id == user.id,
+        Bet.user_id == (data.get("user_id") or current_user.id),
         Bet.status.in_([PredictionStatus.PENDING, PredictionStatus.VOTING])
     ).first()
 
@@ -1213,7 +1107,7 @@ def signal_create_bet():
     vote_until = now + open_timedelta
     print(vote_until)
 
-    bet = Bet(user_id=user.id, title=data.get("title"), description=data.get("description"), vote_until=vote_until)
+    bet = Bet(user_id=data.get("user_id", current_user.id), title=data.get("title"), description=data.get("description"), vote_until=vote_until)
     db.session.add(bet)
     db.session.commit()
 
@@ -1223,334 +1117,28 @@ def signal_create_bet():
         'data': bet.to_dict()
     }), 200
 
-@bp.route('/api/signal/bet/vote', methods=['POST'])
-def signal_create_bet_vote():
-    """Create a new bet vote"""
-
-    # Double check: if it's not from localhost, kill the request
-    if request.remote_addr not in ['127.0.0.1', '::1']:
-        abort(403)
-
-    data = request.get_json()
-
-    # Validate required fields
-    required_fields = ['user_phone', 'bet_id', 'vote']
-    for field in required_fields:
-        if field not in data:
-            return jsonify({'error': f'Missing required field: {field}'}), 400
-
-    user = User.query.filter_by(phone_no=data["user_phone"]).first()
-    bet = Bet.query.filter_by(
-        id=data["bet_id"]
-    ).first()
-
-    if not bet:
-        return jsonify({'error': 'No active bet for this vote exists'}), 400   
-
-    now_aware = datetime.now(timezone.utc)
-    now_naive = now_aware.replace(tzinfo=None)
-    if now_naive > bet.vote_until:
-        return jsonify({'error': 'Forbidden: the time for voting has passed'}), 403
-
-    existing = BetVote.query.filter_by(
-        bet_id=data["bet_id"], user_id=user.id
-    ).first()
-
-    if existing:
-        return jsonify({'error': 'A vote for this bet already exists'}), 409
-
-    vote = BetVote(bet_id=bet.id, user_id=user.id, vote=data.get("vote"))
-    db.session.add(vote)
-    db.session.commit()
-
-    return jsonify({
-        'message': 'Bet vote successfully created',
-        'id': vote.id,
-        'data': {'vote': vote.vote, 'status': vote.bet.status.value}
-    }), 201
-
-
-@bp.route('/api/signal/bet/vote/<int:vote_id>', methods=['PUT', 'PATCH'])
-def signal_update_bet_vote(vote_id):
-    """Update an existing bet vote through signal"""
-
-    # Double check: if it's not from localhost, kill the request
-    if request.remote_addr not in ['127.0.0.1', '::1']:
-        abort(403)
-
-    vote = BetVote.query.get_or_404(vote_id)
-    data = request.get_json()
-    user = User.query.filter_by(phone_no=data["user_phone"]).first()
-
-    if vote.user_id != user.id:
-        return jsonify({'error': 'Unauthorized'}), 403
- 
-    now_aware = datetime.now(timezone.utc)
-    now_naive = now_aware.replace(tzinfo=None)
-    if now_naive > vote.bet.vote_until:
-        return jsonify({'error': 'Forbidden: the time for voting has passed'}), 403
-
-    # Update fields if provided
-    if 'vote' in data:
-        vote.vote= data['vote']
-
-    db.session.commit()
-
-    return jsonify({
-        'message': 'Bet vote successfully updated',
-        'id': vote.id,
-        'data': {'vote': vote.vote, 'status': vote.bet.status.value}
-    }), 200
-
-@bp.route('/api/signal/bet-conclusion', methods=['POST'])
-def signal_create_bet_conclusion():
-    """Create a new bet conclusion"""
-
-    # Double check: if it's not from localhost, kill the request
-    if request.remote_addr not in ['127.0.0.1', '::1']:
-        abort(403)
-
-    data = request.get_json()
-
-    # Validate required fields
-    required_fields = ['user_phone', 'bet_id', 'description', 'outcome']
-    for field in required_fields:
-        if field not in data:
-            return jsonify({'error': f'Missing required field: {field}'}), 400
-
-    user = User.query.filter_by(phone_no=data["user_phone"]).first()
-
-    existing = BetConclusion.query.filter_by(
-        bet_id=data["bet_id"], status=ConclusionStatus.ACTIVE
-    ).first()
-    if existing:
-        return jsonify({'error': 'An active conclusion already exists'}), 409
-
-
-    bet = Bet.query.filter_by(id=data["bet_id"]).first()
-
-    if not bet:
-        return jsonify({'error': 'No valid bet id'}), 409
-
-    if bet.total_against == 0 or bet.total_against == 0:
-        bet.status = PredictionStatus.CANCELLED
-        db.session.commit()
-        return jsonify({'error': 'No valid bet'}), 409
-        
-    try:
-        outcome = ConclusionOutcome[data.get("outcome")]
-    except KeyError:
-        return jsonify({'error': 'Invalid outcome value'}), 400
-    
-    conclusion = BetConclusion(bet_id=data.get("bet_id"), user_id=user.id, description=data.get("description"), url=data.get("url"), outcome=outcome)
-    db.session.add(conclusion)
-    db.session.flush()
-
-    vote = BetConclusionVote(bet_conclusion_id=conclusion.id, user_id=user.id, vote=True)
-    db.session.add(vote)
-
-    conclusion.bet.status = PredictionStatus.VOTING
-
-    db.session.commit()
-
-    return jsonify({
-        'message': 'Bet conclusion successfully created',
-        'id': conclusion.id,
-        'data': {'conclusion': conclusion.to_dict(), 'vote': vote.vote}
-    }), 201
-
-@bp.route('/api/signal/bet-conclusion/<int:bet_conclusion_id>', methods=['PATCH'])
-def signal_update_bet_conclusion(bet_conclusion_id):
-
-    # Double check: if it's not from localhost, kill the request
-    if request.remote_addr not in ['127.0.0.1', '::1']:
-        abort(403)
-
-    conclusion = BetConclusion.query.get_or_404(bet_conclusion_id)
-    data = request.get_json()
-    user = User.query.filter_by(phone_no=data["user_phone"]).first()
-
-    if 'status' in data:
-        try:
-            new_status = ConclusionStatus[data['status']]
-        except KeyError:
-            return jsonify({'error': 'Invalid status value'}), 400
-        
-        # only the submitter can cancel
-        if new_status == ConclusionStatus.CANCELLED:
-            if conclusion.user_id != user.id:
-                return jsonify({'error': 'Unauthorized'}), 403
-            if conclusion.status != ConclusionStatus.ACTIVE:
-                return jsonify({'error': 'Can only cancel an active conclusion'}), 409
-
-            conclusion.status = new_status
-
-    db.session.commit()
-    return jsonify({'message': 'Bet conclusion updated', 'id': conclusion.id}), 200
-
-@bp.route('/api/signal/bet-conclusion/vote', methods=['POST'])
-def signal_create_bet_conclusion_vote():
-    """Create a new bet conclusion vote"""
-
-    # Double check: if it's not from localhost, kill the request
-    if request.remote_addr not in ['127.0.0.1', '::1']:
-        abort(403)
-
-    data = request.get_json()
-
-    # Validate required fields
-    required_fields = ['user_phone', 'bet_conclusion_id', 'vote']
-    for field in required_fields:
-        if field not in data:
-            return jsonify({'error': f'Missing required field: {field}'}), 400
-
-    user = User.query.filter_by(phone_no=data["user_phone"]).first()
-
-    conclusion = BetConclusion.query.filter_by(
-        id=data["bet_conclusion_id"]
-    ).first()
-
-    if not conclusion:
-        return jsonify({'error': 'No active conclusion for this vote exists'}), 400   
-
-    existing = BetConclusionVote.query.filter_by(
-        bet_conclusion_id=data["bet_conclusion_id"], user_id=user.id
-    ).first()
-
-    if existing:
-        return jsonify({'error': 'A vote for this bet conclusion already exists'}), 409
-
-    vote = BetConclusionVote(bet_conclusion_id=conclusion.id, user_id=user.id, vote=data.get("vote"))
-    db.session.add(vote)
-    db.session.flush()
-    
-    if conclusion.total_in_favour >= Config.VOTE_LIMIT:
-
-        conclusion.bet.status = PredictionStatus(conclusion.outcome.value)
-        conclusion.status = ConclusionStatus.ACCEPTED
-        winnings = 0.0
-        if conclusion.outcome == ConclusionOutcome.SUCCESS:
-            winnings += conclusion.bet.odds_against
-        elif conclusion.outcome == ConclusionOutcome.FAILED:
-            winnings += conclusion.bet.odds_in_favour
-
-        losers = []
-        winners = []
-
-        for participant in conclusion.bet.votes:
-            if (conclusion.outcome == ConclusionOutcome.SUCCESS) and (participant.vote is True):
-                winners.append(participant.id)
-            elif (conclusion.outcome == ConclusionOutcome.FAILED) and (participant.vote is False):
-                winners.append(participant.id)
-            else:
-                losers.append(participant.id)
-            
-            for loser in losers:
-                for winner in winners:
-                    ledger_entry = BeerLedger(debtor_id=loser, creditor_id=winner, amount=float(winnings), bet_id=conclusion.bet.id, reason=f"Bet {conclusion.bet.id} - {conclusion.outcome} - {winnings} beer")
-                    db.session.add(ledger_entry)
-
-    elif conclusion.total_against >= Config.VOTE_LIMIT:
-        conclusion.status = ConclusionStatus.REJECTED
-        conclusion.bet.status = PredictionStatus.PENDING
-
-    db.session.commit()
-
-    return jsonify({
-        'message': 'Bet conclusion vote successfully created',
-        'id': vote.id,
-        'data': {'vote': vote.vote, 'status': vote.conclusion.status.value}
-    }), 201
-
-@bp.route('/api/signal/bet-conclusion/vote/<int:vote_id>', methods=['PUT', 'PATCH'])
-def signal_update_bet_conclusion_vote(vote_id):
-    """Update an existing bet conclusion vote"""
-    
-    # Double check: if it's not from localhost, kill the request
-    if request.remote_addr not in ['127.0.0.1', '::1']:
-        abort(403)
-
-    vote = BetConclusionVote.query.get_or_404(vote_id)
-    data = request.get_json()
-    user = User.query.filter_by(phone_no=data["user_phone"]).first()
-
-    if vote.user_id != user.id:
-        return jsonify({'error': 'Unauthorized'}), 403
- 
-    conclusion = BetConclusion.query.filter_by(id=vote.bet_conclusion_id).first()
-
-    # Update fields if provided
-    if 'vote' in data:
-        vote.vote= data['vote']
-
-    db.session.flush()
-
-    
-    if conclusion.total_in_favour >= Config.VOTE_LIMIT:
-        conclusion.bet.status = PredictionStatus(conclusion.outcome.value)
-        conclusion.status = ConclusionStatus.ACCEPTED
-        winnings = 0.0
-        if conclusion.outcome == ConclusionOutcome.SUCCESS:
-            winnings += conclusion.bet.odds_against
-        elif conclusion.outcome == ConclusionOutcome.FAILED:
-            winnings += conclusion.bet.odds_favour
-
-        losers = []
-        winners = []
-
-        for participant in conclusion.bet.votes:
-            if (conclusion.outcome == ConclusionOutcome.SUCCESS) and (participant.vote is True):
-                winners.append(participant.id)
-            elif (conclusion.outcome == ConclusionOutcome.FAILED) and (participant.vote is False):
-                winners.append(participant.id)
-            else:
-                losers.append(participant.id)
-            
-            for loser in losers:
-                for winner in winners:
-                    ledger_entry = BeerLedger(debtor_id=loser, creditor_id=winner, amount=float(winnings), bet_id=conclusion.bet.id, reason=f"Bet {conclusion.bet.id} - {conclusion.outcome} - {winnings} beer")
-                    db.session.add(ledger_entry)
-
-    elif conclusion.total_against >= Config.VOTE_LIMIT:
-        conclusion.status = ConclusionStatus.REJECTED
-        conclusion.bet.status = PredictionStatus.PENDING
-
-    db.session.commit()
-
-    return jsonify({
-        'message': 'Bet conclusion vote successfully updated',
-        'id': vote.id,
-        'data': {'vote': vote.vote, 'status': vote.conclusion.status.value}
-    }), 200
 
 @bp.route('/api/signal/beer', methods=['POST'])
 def signal_create_bulk_beer_transaction():
     """Create bulk beer transactions through signal"""
-
-    # Double check: if it's not from localhost, kill the request
-    if request.remote_addr not in ['127.0.0.1', '::1']:
-        abort(403)
-
     data = request.get_json()
-    debtor = User.query.filter_by(phone_no=data["user_phone"]).first()
     try:
         ids = []
         ledger_data = []
 
         for i, entry in enumerate(data["data"]):
-            required_fields = ['user_phone', 'amount']
+            required_fields = ['creditor_id', 'amount']
             for field in required_fields:
                 if field not in entry:
                     return jsonify({'error': f'Missing required field: {field} in {i}'}), 400
-            
-            creditor = User.query.filter_by(phone_no=entry["user_phone"]).first()
+
 
             bet_id = entry.get("bet_id")
             bet_id = None if bet_id == None else int(bet_id)
 
             reason = entry.get('reason', '').strip() or None
 
-            ledger_entry = BeerLedger(debtor_id=debtor.id, creditor_id=creditor.id, amount=float(entry.get("amount")), bet_id=bet_id, reason=reason)
+            ledger_entry = BeerLedger(debtor_id=entry.get("debitor_id", current_user.id), creditor_id=entry.get("creditor_id"), amount=float(entry.get("amount")), bet_id=bet_id, reason=reason)
             db.session.add(ledger_entry)
             db.session.flush()
             ids.append(ledger_entry.id)
